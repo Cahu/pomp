@@ -57,7 +57,7 @@ directive:
 
 clauses:
 	                  { undef; }
-	| clauses clause  { say $_[2]; [$_[2], @$_[1]]; }
+	| clauses clause  { [$_[2], @$_[1]]; }
 	;
 
 clause:

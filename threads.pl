@@ -8,8 +8,8 @@ my @POMP_QUEUES;
 my @POMP_THREADS;
 
 use constant {
-	CALL => 1,
-	EXIT => 2,
+	CALL => 1,    # call a sub with given parameters
+	EXIT => 2,    # exit loop and terminate
 };
 
 
@@ -25,7 +25,9 @@ sub POMP_CONSUMER {
 		if ($code == CALL) {
 			print "Thread " . $self->tid() . " runs a job.\n";
 			my ($sub, @sub_args) = @args;
-			{
+
+			{	# It's not possible to pass code refs to queues. We have to
+				# disable strict ref to use the name (string) of the sub instead.
 				no strict 'refs';
 				$sub->(@sub_args);
 			}
@@ -41,6 +43,7 @@ sub POMP_CONSUMER {
 
 
 INIT {
+	# Create queues and spawn threads
 	@POMP_QUEUES  = map { Thread::Queue->new(); } (0..3);
 	@POMP_THREADS = map {
 		threads->create(\&POMP_CONSUMER, $POMP_QUEUES[$_]);
@@ -49,7 +52,7 @@ INIT {
 
 
 END {
-	# clean up
+	# Clean up
 	$_->enqueue([EXIT, undef]) for (@POMP_QUEUES);
 	$_->join() for (@POMP_THREADS);
 }

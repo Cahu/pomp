@@ -94,7 +94,8 @@ sub lex {
 	}
 
 	## CODE
-	if ($$data =~ s/^begin\n(.*?)#end//s) {
+	if ($$data =~ s/^begin\n(.*?)#pomp_end//s) {
+		$is_parsing = 0;
 		return ('CODE', $1);
 	}
 

@@ -2,11 +2,10 @@
 {
 	print "toto";
 }
-#end
+#pomp_end
 
 #pomp_parallel begin
 {
 	print for my $truc (1..10);
 }
-#end
-
+#pomp_end

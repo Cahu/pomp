@@ -1,0 +1,119 @@
+%{
+use 5.010;
+use strict;
+use warnings;
+%}
+
+%token IF
+
+%token FOR
+%token PARALLEL
+
+%token LPAREN
+%token RPAREN
+
+%token SHARED
+%token PRIVATE
+
+%%
+
+jobs: 
+	| jobs job
+	;
+	
+job:
+	  directive clauses CODE { 
+		  my $directive   = $_[1];
+		  my $clauses_ref = $_[2];
+		  my $code        = $_[3];
+
+		  say "Directive: $directive";
+		  print "Clauses: ";
+		  for my $c (@$clauses_ref) {
+			  print $c if ($c);
+		  }
+		  say "";
+		  say "CODE:";
+		  say "$code";
+	  }
+	;
+
+directive:
+	  PARALLEL { "parallel"; }
+	| FOR      { "for"; }
+	;
+
+clauses:
+	                  { undef; }
+	| clauses clause  { say $_[2]; [$_[2], @$_[1]]; }
+	;
+
+clause:
+	  IF LPAREN expr RPAREN       { "if"; }
+	| SHARED LPAREN list RPAREN   { "shared"; }
+	| PRIVATE LPAREN list RPAREN  { "private"; }
+	;
+
+expr:
+	;
+
+list:
+	;
+
+%%
+
+use Data::Dumper;
+
+my $line = 0;
+
+sub lex {
+	my $data = \$_[0]->YYData->{DATA};
+
+	# remove leading spaces
+	$$data =~ s/^[ \n]+//;
+
+	# nothing else to read
+	return ('', undef) unless (length $$data);
+
+	## DELIMITERS
+	if ($$data =~ s/^\(//) {
+		return ('LPAREN', undef) 
+	}
+
+	if ($$data =~ s/^\)//) {
+		return ('RPAREN', undef) 
+	}
+
+	## DIRECTIVES
+	if ($$data =~ s/^#pomp_for//) {
+		return ('FOR', undef);
+	}
+
+	if ($$data =~ s/^#pomp_parallel//) {
+		return ('PARALLEL', undef);
+	}
+
+	## CODE
+	if ($$data =~ s/^begin\n(.*?)#end//s) {
+		return ('CODE', $1);
+	}
+
+	## CLAUSES
+	if ($$data =~ s/^if//) {
+		return ('IF', undef);
+	}
+
+	if ($$data =~ s/^shared//) {
+		return ('SHARED', undef);
+	}
+
+	if ($$data =~ s/^private//) {
+		return ('PRIVATE', undef);
+	}
+
+	die;
+}
+
+sub error {
+	print "Error\n";
+}

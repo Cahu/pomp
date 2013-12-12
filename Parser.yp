@@ -2,6 +2,10 @@
 use 5.010;
 use strict;
 use warnings;
+
+use POMP::Sub;
+
+my @subs;
 %}
 
 %token IF
@@ -41,7 +45,8 @@ job:
 		  }
 		  say "";
 		  say "CODE:";
-		  say "$code";
+		  POMP::Sub->new("machin", undef, $code)->print();
+		  say "";
 	  }
 	;
 

@@ -128,12 +128,21 @@ sub lex {
 	}
 
 	# end of recognized POMP langage
-	die if ($is_parsing);
+	$_[0]->YYError if ($is_parsing);
 
 	$$data =~ s/(.*?)#/#/s;
-	return ('UNHANDLED_CODE', $1);
+	if ($1) {
+		# skip code until next '#'
+		return ('UNHANDLED_CODE', $1);
+	} else {
+		# no more '#', skip the rest of the file
+		my $ret = $$data;
+		$$data = "";
+		return ('UNHANDLED_CODE', $ret);
+	}
 }
 
 sub error {
-	print "Error\n";
+	my $data = \$_[0]->YYData->{DATA};
+	print "Error found: '" . ($$data =~ s/(.*?)\n/$1/rs) . "'\n";
 }

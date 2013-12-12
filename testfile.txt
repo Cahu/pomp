@@ -13,3 +13,8 @@ sub foo {
 	print for my $truc (1..10); #pomp_end
 }
 	#pomp_end
+
+#pomp_truc bazar truc begin
+{
+}
+#pomp_end

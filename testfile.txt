@@ -10,6 +10,6 @@ sub foo {
 
 #pomp_parallel begin
 {
-	print for my $truc (1..10);
+	print for my $truc (1..10); #pomp_end
 }
-#pomp_end
+	#pomp_end

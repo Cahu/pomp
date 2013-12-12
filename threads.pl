@@ -13,8 +13,7 @@ use constant {
 };
 
 
-sub truc { print "Hello World!\n"; }
-$_->enqueue([CALL, "truc"]) for (@POMP_QUEUES);
+sub foo { print "Hello World!\n"; }
 
 
 BEGIN {
@@ -34,7 +33,9 @@ BEGIN {
 					no strict 'refs';
 					$sub->(@sub_args);
 				}
-			} elsif ($code == EXIT) {
+			}
+
+			elsif ($code == EXIT) {
 				last;
 			}
 		}
@@ -53,3 +54,6 @@ END {
 	$_->enqueue([EXIT, undef]) for (@POMP_QUEUES);
 	$_->join() for (@POMP_THREADS);
 }
+
+
+$_->enqueue([CALL, "foo"]) for (@POMP_QUEUES);

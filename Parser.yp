@@ -104,11 +104,12 @@ sub lex {
 	}
 
 	if ($$data =~ s/^#pomp_parallel//) {
+		$is_parsing = 1;
 		return ('PARALLEL', undef);
 	}
 
 	## CODE
-	if ($$data =~ s/^begin\n(.*?\n)\s*#pomp_end//s) {
+	if ($$data =~ s/^begin\n(.*?\n)\s*#pomp_end//s && $is_parsing) {
 		$is_parsing = 0;
 		return ('CODE', $1);
 	}

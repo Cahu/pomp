@@ -15,6 +15,9 @@ use warnings;
 %token SHARED
 %token PRIVATE
 
+%token CODE
+%token UNHANDLED_CODE
+
 %%
 
 jobs: 
@@ -22,7 +25,11 @@ jobs:
 	;
 	
 job:
-	  directive clauses CODE { 
+	  UNHANDLED_CODE {
+		  print $_[1];
+	  }
+
+	| directive clauses CODE {
 		  my $directive   = $_[1];
 		  my $clauses_ref = $_[2];
 		  my $code        = $_[3];
@@ -65,6 +72,7 @@ list:
 use Data::Dumper;
 
 my $line = 0;
+my $is_parsing = 0;
 
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
@@ -86,6 +94,7 @@ sub lex {
 
 	## DIRECTIVES
 	if ($$data =~ s/^#pomp_for//) {
+		$is_parsing = 1;
 		return ('FOR', undef);
 	}
 
@@ -112,7 +121,11 @@ sub lex {
 		return ('PRIVATE', undef);
 	}
 
-	die;
+	# end of recognized POMP langage
+	die if ($is_parsing);
+
+	$$data =~ s/(.*?)#/#/s;
+	return ('UNHANDLED_CODE', $1);
 }
 
 sub error {

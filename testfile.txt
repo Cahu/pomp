@@ -4,6 +4,10 @@
 }
 #pomp_end
 
+sub foo {
+	$_[0] + 1;
+}
+
 #pomp_parallel begin
 {
 	print for my $truc (1..10);

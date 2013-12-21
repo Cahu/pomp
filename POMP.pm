@@ -1,11 +1,10 @@
-#use strict;
-#use warnings;
+package POMP;
 
 use threads;
 use Thread::Queue;
 
-my @POMP_QUEUES;
-my @POMP_THREADS;
+our @POMP_QUEUES;
+our @POMP_THREADS;
 
 use constant {
 	CALL => 1,    # call a sub with given parameters
@@ -57,6 +56,4 @@ END {
 	$_->join() for (@POMP_THREADS);
 }
 
-
-sub foo { print "Hello World!\n"; }
-$_->enqueue([CALL, "foo"]) for (@POMP_QUEUES);
+1;

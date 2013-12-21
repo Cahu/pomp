@@ -55,8 +55,7 @@ job:
 		  print '$_->enqueue(['
 			. 'POMP::CALL, '
 			. '__PACKAGE__ . "::' . $subname . '"'
-			. ']) for (@POMP::POMP_QUEUES);'
-		    . "\n";
+			. ']) for (@POMP::POMP_QUEUES);';
 	  }
 	;
 
@@ -93,7 +92,7 @@ sub lex {
 	my $data = \$_[0]->YYData->{DATA};
 
 	# remove leading spaces
-	$$data =~ s/^[ \n]+//;
+	$$data =~ s/^[ ]+//;
 
 	# nothing else to read
 	return ('', undef) unless (length $$data);

@@ -6,6 +6,7 @@ use warnings;
 use POMP::Sub;
 
 our @POMP_subs;
+our %counts;
 %}
 
 %token IF
@@ -38,6 +39,7 @@ job:
 		  my $clauses_ref = $_[2];
 		  my $code        = $_[3];
 
+		  ++$counts{$directive};
 
 		  #print "Clauses:";
 		  #for my $c (@$clauses_ref) {

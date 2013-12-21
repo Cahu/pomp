@@ -21,7 +21,7 @@ sub print {
 		$out = \*STDOUT;
 	}
 
-	print $out "sub " . $self->{name};
+	print $out "sub " . $self->{name} . " ";
 	print $out $self->{code};
 }
 

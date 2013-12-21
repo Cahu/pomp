@@ -5,7 +5,7 @@ use warnings;
 
 use POMP::Sub;
 
-my @subs;
+our @POMP_subs;
 %}
 
 %token IF
@@ -38,15 +38,20 @@ job:
 		  my $clauses_ref = $_[2];
 		  my $code        = $_[3];
 
-		  print "Clauses:";
-		  for my $c (@$clauses_ref) {
-			  print " $c" if ($c);
-		  }
 
-		  say "";
-		  say "CODE:";
-		  POMP::Sub->new("machin", undef, $code)->print();
-		  say "";
+		  #print "Clauses:";
+		  #for my $c (@$clauses_ref) {
+		  #    print " $c" if ($c);
+		  #}
+
+		  my $subname = $directive . $counts{$directive};
+		  push @POMP_subs, POMP::Sub->new($subname, undef, $code);
+
+		  print '$_->enqueue(['
+			. 'POMP::CALL, '
+			. '__PACKAGE__ . "::' . $subname . '"'
+			. ']) for (@POMP::POMP_QUEUES);';
+		  print "\n\n";
 	  }
 	;
 

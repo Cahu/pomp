@@ -12,8 +12,23 @@ $p->YYData->{DATA} = do {local $/, <$file>};
 
 close($file);
 
+
+print <<'EOP';
+use POMP;
+EOP
+
 $p->YYParse(YYlex => \&Parser::lex, YYerror => \&Parser::error);
 
+print <<'EOP';
+
+### POMP GENERATED SUBS ###
+
+EOP
+
+foreach my $s (@Parser::POMP_subs) {
+	$s->print;
+	print "\n";
+}
 
 
 sub usage {

@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 #pomp_for if() shared() begin
 {
 	print "toto";
@@ -10,11 +13,12 @@ sub foo {
 
 #pomp_parallel begin
 {
-	print for my $truc (1..10); #pomp_end
+	map { print "$_\n" } (1 .. 10);
 }
 	#pomp_end
 
 #pomp_truc bazar truc begin
 {
+	print "Yo!\n";
 }
 #pomp_end

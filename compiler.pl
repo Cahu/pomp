@@ -14,14 +14,17 @@ close($file);
 
 
 print <<'EOP';
+### POMP Header --------------------
 use POMP;
+### --------------------------------
+
 EOP
 
 $p->YYParse(YYlex => \&Parser::lex, YYerror => \&Parser::error);
 
 print <<'EOP';
 
-### POMP GENERATED SUBS ###
+### POMP GENERATED SUBS ------------
 
 EOP
 
@@ -29,6 +32,10 @@ foreach my $s (@Parser::POMP_subs) {
 	$s->print;
 	print "\n";
 }
+
+print <<'EOP';
+### --------------------------------
+EOP
 
 
 sub usage {

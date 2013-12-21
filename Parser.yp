@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use POMP::Sub;
+use POMP::Indent;
 
 our @POMP_subs;
 our %counts;
@@ -47,13 +48,15 @@ job:
 		  #}
 
 		  my $subname = $directive . $counts{$directive};
-		  push @POMP_subs, POMP::Sub->new($subname, undef, $code);
+		  push @POMP_subs, POMP::Sub->new(
+			  $subname, undef, POMP::Indent::reindent($code)
+		  );
 
 		  print '$_->enqueue(['
 			. 'POMP::CALL, '
 			. '__PACKAGE__ . "::' . $subname . '"'
-			. ']) for (@POMP::POMP_QUEUES);';
-		  print "\n\n";
+			. ']) for (@POMP::POMP_QUEUES);'
+		    . "\n";
 	  }
 	;
 

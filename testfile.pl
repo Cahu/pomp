@@ -9,6 +9,12 @@ use warnings;
 
 sub foo {
 	$_[0] + 1;
+	#pomp_parallel begin
+	{
+		print "tata\n";
+		print "tutu\n";
+	}
+	#pomp_end
 }
 
 #pomp_parallel begin
@@ -22,3 +28,5 @@ sub foo {
 	print "Yo!\n";
 }
 #pomp_end
+
+foo();

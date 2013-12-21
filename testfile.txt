@@ -1,4 +1,4 @@
-#pomp_for if() begin
+#pomp_for if() shared() begin
 {
 	print "toto";
 }

@@ -1,20 +1,22 @@
 use strict;
 use warnings;
 
-#pomp_for if() shared() begin
+my $truc = 1;
+
+#pomp_for if($truc) shared(@machin) begin
 {
 	print "toto";
 }
 #pomp_end
 
 sub foo {
-	$_[0] + 1;
-	#pomp_parallel begin
+	#pomp_parallel if($truc) begin
 	{
 		print "tata\n";
 		print "tutu\n";
 	}
 	#pomp_end
+	return $_[0] + 1;
 }
 
 #pomp_parallel begin
@@ -29,4 +31,4 @@ sub foo {
 }
 #pomp_end
 
-foo();
+foo(2);

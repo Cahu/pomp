@@ -5,6 +5,7 @@ use warnings;
 
 use POMP::Sub;
 use POMP::Indent;
+use POMP::Clause;
 
 our @POMP_subs;
 our %counts;
@@ -14,9 +15,6 @@ our %counts;
 
 %token FOR
 %token PARALLEL
-
-%token LPAREN
-%token RPAREN
 
 %token SHARED
 %token PRIVATE
@@ -48,11 +46,15 @@ job:
 		  );
 
 		  push @POMP_subs, $sub;
-		  print '$_->enqueue(['
-			. 'POMP::CALL, '
-			. '__PACKAGE__ . "::' . $subname . '"'
-			. ']) for (@POMP::POMP_QUEUES);';
+
+		  if (my $cond = $clauses_ref->{IF}) {
+			  print POMP::Clause::gen_if(
+				  $cond,
+				  $sub->gen_call($subname)
+			  );
+		  } else {
 			  print $sub->gen_call($subname);
+		  }
 	  }
 	;
 
@@ -62,21 +64,21 @@ directive:
 	;
 
 clauses:
-	                  { []; }
-	| clauses clause  { [@{$_[1]}, $_[2]]; }
+	                  { {}; }
+	| clauses clause  {
+	      while (my ($key, $val) = each %{$_[2]}) {
+			  $_[1]->{$key} = $val;
+		  }
+		  $_[1];
+	  }
 	;
 
 clause:
-	  IF LPAREN expr RPAREN       { "if"; }
-	| SHARED LPAREN list RPAREN   { "shared"; }
-	| PRIVATE LPAREN list RPAREN  { "private"; }
+	  IF      { { 'IF'      => $_[1] }; }
+	| SHARED  { { 'SHARED'  => $_[1] }; }
+	| PRIVATE { { 'PRIVATE' => $_[1] }; }
 	;
 
-expr:
-	;
-
-list:
-	;
 
 %%
 
@@ -93,15 +95,6 @@ sub lex {
 
 	# nothing else to read
 	return ('', undef) unless (length $$data);
-
-	## DELIMITERS
-	if ($$data =~ s/^\(//) {
-		return ('LPAREN', undef) 
-	}
-
-	if ($$data =~ s/^\)//) {
-		return ('RPAREN', undef) 
-	}
 
 	## DIRECTIVES
 	if ($$data =~ s/^#pomp_for//) {
@@ -121,16 +114,16 @@ sub lex {
 	}
 
 	## CLAUSES
-	if ($$data =~ s/^if//) {
-		return ('IF', undef);
+	if ($$data =~ s/^if \s* \( \s* (\$\w+) \s* \)//x) {
+		return ('IF', $1);
 	}
 
-	if ($$data =~ s/^shared//) {
-		return ('SHARED', undef);
+	if ($$data =~ s/^shared \s* \( \s* (\@\w+) \s* \)//x) {
+		return ('SHARED', $1);
 	}
 
-	if ($$data =~ s/^private//) {
-		return ('PRIVATE', undef);
+	if ($$data =~ s/^private \s* \( \s* (\@\w+) \s* \)//x) {
+		return ('PRIVATE', $1);
 	}
 
 	# end of recognized POMP langage

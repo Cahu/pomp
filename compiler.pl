@@ -29,7 +29,7 @@ print <<'EOP';
 EOP
 
 foreach my $s (@Parser::POMP_subs) {
-	$s->print;
+	print $s->gen_body;
 	print "\n";
 }
 

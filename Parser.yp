@@ -42,20 +42,17 @@ job:
 
 		  ++$counts{$directive};
 
-		  #print "Clauses:";
-		  #for my $c (@$clauses_ref) {
-		  #    print " $c" if ($c);
-		  #}
-
 		  my $subname = $directive . $counts{$directive};
-		  push @POMP_subs, POMP::Sub->new(
-			  $subname, undef, POMP::Indent::reindent($code)
+		  my $sub = POMP::Sub->new(
+			  $subname, [], POMP::Indent::reindent($code)
 		  );
 
+		  push @POMP_subs, $sub;
 		  print '$_->enqueue(['
 			. 'POMP::CALL, '
 			. '__PACKAGE__ . "::' . $subname . '"'
 			. ']) for (@POMP::POMP_QUEUES);';
+			  print $sub->gen_call($subname);
 	  }
 	;
 

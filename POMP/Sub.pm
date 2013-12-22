@@ -14,15 +14,23 @@ sub new {
 }
 
 
-sub print {
-	my ($self, $out) = @_;
+sub gen_body {
+	my $self = shift;
+	return "sub " . $self->{name} . " " . $self->{code};
+}
 
-	if (!defined $out) {
-		$out = \*STDOUT;
-	}
 
-	print $out "sub " . $self->{name} . " ";
-	print $out $self->{code};
+sub gen_call {
+	my $self = shift;
+
+	local $, = ", ";
+
+	return '$_->enqueue(['
+		. 'POMP::CALL, '
+		. '__PACKAGE__ . "::' . $self->{name} . '"'
+		. ', ' . "@{$self->{args}}"
+		. ']) for (@POMP::POMP_QUEUES);'
+	;
 }
 
 1;

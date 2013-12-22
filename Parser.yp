@@ -55,6 +55,8 @@ job:
 		  } else {
 			  print $sub->gen_call($subname);
 		  }
+
+		  print "\n";
 	  }
 	;
 
@@ -85,31 +87,31 @@ clause:
 use Data::Dumper;
 
 my $line = 0;
-my $is_parsing = 0;
+my $is_slurping = 0;
 
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
 
 	# remove leading spaces
-	$$data =~ s/^[ ]+//;
+	$$data =~ s/^\s*//;
 
 	# nothing else to read
 	return ('', undef) unless (length $$data);
 
 	## DIRECTIVES
 	if ($$data =~ s/^#pomp_for//) {
-		$is_parsing = 1;
+		$is_slurping = 1;
 		return ('FOR', undef);
 	}
 
 	if ($$data =~ s/^#pomp_parallel//) {
-		$is_parsing = 1;
+		$is_slurping = 1;
 		return ('PARALLEL', undef);
 	}
 
 	## CODE
-	if ($$data =~ s/^begin\n(.*?\n)\s*#pomp_end//s && $is_parsing) {
-		$is_parsing = 0;
+	if ($$data =~ s/^begin\n(.*?\n)\s*#pomp_end//s && $is_slurping) {
+		$is_slurping = 0;
 		return ('CODE', $1);
 	}
 
@@ -127,7 +129,7 @@ sub lex {
 	}
 
 	# end of recognized POMP langage
-	$_[0]->YYError if ($is_parsing);
+	$_[0]->YYError if ($is_slurping);
 
 	$$data =~ s/(.*?)#/#/s;
 	if ($1) {

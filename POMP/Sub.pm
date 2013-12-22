@@ -3,6 +3,8 @@ package POMP::Sub;
 use strict;
 use warnings;
 
+use POMP::Indent;
+
 
 sub new {
 	my ($class, $sub_name, $args, $code) = @_;
@@ -16,7 +18,9 @@ sub new {
 
 sub gen_body {
 	my $self = shift;
-	return "sub " . $self->{name} . " " . $self->{code};
+	return "sub " . $self->{name} . " {\n"
+	     . POMP::Indent::indent($self->{code}) . "\n"
+	     . "}\n";
 }
 
 

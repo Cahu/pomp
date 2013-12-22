@@ -12,7 +12,9 @@ my $truc = 1;
 sub foo {
 	#pomp_parallel if($truc) begin
 	{
-		print "tata\n";
+		for (1..10) {
+			print "tata $_\n";
+		}
 		print "tutu\n";
 	}
 	#pomp_end

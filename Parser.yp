@@ -41,9 +41,7 @@ job:
 		  ++$counts{$directive};
 
 		  my $subname = $directive . $counts{$directive};
-		  my $sub = POMP::Sub->new(
-			  $subname, [], POMP::Indent::reindent($code)
-		  );
+		  my $sub = POMP::Sub->new($subname, [], $code);
 
 		  push @POMP_subs, $sub;
 
@@ -55,8 +53,6 @@ job:
 		  } else {
 			  print $sub->gen_call($subname);
 		  }
-
-		  print "\n";
 	  }
 	;
 
@@ -92,8 +88,8 @@ my $is_slurping = 0;
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
 
-	# remove leading spaces
-	$$data =~ s/^\s*//;
+	# remove leading spaces when parsing a POMP command
+	$$data =~ s/^\s*// if ($is_slurping);
 
 	# nothing else to read
 	return ('', undef) unless (length $$data);
@@ -110,9 +106,16 @@ sub lex {
 	}
 
 	## CODE
-	if ($$data =~ s/^begin\n(.*?\n)\s*#pomp_end//s && $is_slurping) {
+	if ($$data =~ s/
+			^begin \s*   \n     # 'begin' is on a commented line, \n mandatory
+			\s* { [^\n]* \n     # keep indentation of the first line
+			(.*?)               # get all the code within the block
+			\s* } \s*           # remove useless spaces
+			\n \s* \#pomp_end   # '#pomp_end' on a new line, possibly indented
+		//sx && $is_slurping
+	) {
 		$is_slurping = 0;
-		return ('CODE', $1);
+		return ('CODE', POMP::Indent::reindent($1));
 	}
 
 	## CLAUSES

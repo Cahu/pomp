@@ -16,13 +16,13 @@ use constant {
 sub POMP_CONSUMER {
 	my $queue = shift;
 	my $self  = threads->self();
-	print "Thread " . $self->tid() . " started.\n";
+	#print "Thread " . $self->tid() . " started.\n";
 
 	while (my $instr = $queue->dequeue()) {
 		my ($code, @args) = @$instr;
 
 		if ($code == CALL) {
-			print "Thread " . $self->tid() . " runs a job.\n";
+			#print "Thread " . $self->tid() . " runs a job.\n";
 			my ($sub, @sub_args) = @args;
 
 			{	# It's not possible to pass code refs to queues. We have to
@@ -37,7 +37,7 @@ sub POMP_CONSUMER {
 		}
 	}
 
-	print "Thread " . $self->tid() . " stoped.\n";
+	#print "Thread " . $self->tid() . " stoped.\n";
 }
 
 
@@ -52,7 +52,7 @@ INIT {
 
 END {
 	# Clean up
-	$_->enqueue([EXIT, undef]) for (@POMP_QUEUES);
+	$_->enqueue([EXIT]) for (@POMP_QUEUES);
 	$_->join() for (@POMP_THREADS);
 }
 

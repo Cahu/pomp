@@ -83,25 +83,25 @@ clause:
 use Data::Dumper;
 
 my $line = 0;
-my $is_slurping = 0;
+my $is_parsing = 0;
 
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
 
 	# remove leading spaces when parsing a POMP command
-	$$data =~ s/^\s*// if ($is_slurping);
+	$$data =~ s/^\s*// if ($is_parsing);
 
 	# nothing else to read
 	return ('', undef) unless (length $$data);
 
 	## DIRECTIVES
 	if ($$data =~ s/^#pomp_for//) {
-		$is_slurping = 1;
+		$is_parsing = 1;
 		return ('FOR', undef);
 	}
 
 	if ($$data =~ s/^#pomp_parallel//) {
-		$is_slurping = 1;
+		$is_parsing = 1;
 		return ('PARALLEL', undef);
 	}
 
@@ -112,9 +112,9 @@ sub lex {
 			(.*?)               # get all the code within the block
 			\s* } \s*           # remove useless spaces
 			\n \s* \#pomp_end   # '#pomp_end' on a new line, possibly indented
-		//sx && $is_slurping
+		//sx && $is_parsing
 	) {
-		$is_slurping = 0;
+		$is_parsing = 0;
 		return ('CODE', POMP::Indent::reindent($1));
 	}
 
@@ -132,7 +132,7 @@ sub lex {
 	}
 
 	# end of recognized POMP langage
-	$_[0]->YYError if ($is_slurping);
+	$_[0]->YYError if ($is_parsing);
 
 	$$data =~ s/(.*?)#/#/s;
 	if ($1) {

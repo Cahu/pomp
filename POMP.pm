@@ -5,6 +5,7 @@ use Thread::Queue;
 
 our @POMP_QUEUES;
 our @POMP_THREADS;
+our $POMP_NUM_THREADS = 4;
 
 use constant {
 	CALL => 1,    # call a sub with given parameters
@@ -43,10 +44,10 @@ sub POMP_CONSUMER {
 
 INIT {
 	# Create queues and spawn threads
-	@POMP_QUEUES  = map { Thread::Queue->new(); } (0..3);
+	@POMP_QUEUES  = map { Thread::Queue->new(); } (0..$POMP_NUM_THREADS-1);
 	@POMP_THREADS = map {
 		threads->create(\&POMP_CONSUMER, $POMP_QUEUES[$_]);
-	} (0..3);
+	} (0..$POMP_NUM_THREADS-1);
 }
 
 

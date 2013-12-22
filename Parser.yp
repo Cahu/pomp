@@ -109,6 +109,7 @@ sub lex {
 	## CODE
 	if ($$data =~ s/
 			^begin \s*   \n     # 'begin' is on a commented line, \n mandatory
+			\s* (.*?)           # possible loop declaration
 			\s* { [^\n]* \n     # keep indentation of the first line
 			(.*?)               # get all the code within the block
 			\s* } \s*           # remove useless spaces
@@ -116,7 +117,7 @@ sub lex {
 		//sx && $is_parsing
 	) {
 		$is_parsing = 0;
-		return ('CODE', POMP::Indent::reindent($1));
+		return ('CODE', POMP::Indent::reindent($2));
 	}
 
 	## CLAUSES

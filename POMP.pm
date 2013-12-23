@@ -20,17 +20,14 @@ sub POMP_CONSUMER {
 	#print "Thread " . $self->tid() . " started.\n";
 
 	while (my $instr = $queue->dequeue()) {
-		my ($code, @args) = @$instr;
+		my ($code, $sub, @sub_args) = @$instr;
 
 		if ($code == CALL) {
 			#print "Thread " . $self->tid() . " runs a job.\n";
-			my ($sub, @sub_args) = @args;
-
-			{	# It's not possible to pass code refs to queues. We have to
-				# disable strict ref to use the name (string) of the sub instead.
-				no strict 'refs';
-				$sub->(@sub_args);
-			}
+			# It's not possible to pass code refs to queues. We have to
+			# disable strict ref to use the name (string) of the sub instead.
+			no strict 'refs';
+			$sub->(@sub_args);
 		}
 
 		elsif ($code == EXIT) {

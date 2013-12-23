@@ -16,6 +16,7 @@ close($file);
 print <<'EOP';
 ### POMP Header --------------------
 use POMP;
+use threads::shared;
 ### --------------------------------
 
 EOP

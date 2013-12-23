@@ -9,7 +9,7 @@ use POMP::Indent;
 sub new {
 	my ($class, $sub_name, $code) = @_;
 	return bless {
-		name    => $sub_name,
+		name    => "pomp_" . $sub_name,
 		code    => $code,
 		private => [],
 		shared  => [],
@@ -41,21 +41,25 @@ sub gen_body {
 		# threads::shared). We must substitute all occurences of these variables
 		# with the corresponding dereference instruction.
 		my $barename;
+		my $substitute;
 		if ($shared =~ /^@(.*)/) {
 			$barename = $1;
-			$self->{code} =~ s/\@$barename/\@\{\$$barename\}/;
-			$self->{code} =~ s/\$$barename\s*\[/\$$barename->\[/;
+			$substitute = $self->{name} . "_" . $barename;
+			$self->{code} =~ s/\@$barename/\@\{\$$substitute\}/;
+			$self->{code} =~ s/\$$barename\s*\[/\$$substitute->\[/;
 		}
 
 		elsif ($shared =~ /^%(.*)/) {
 			$barename = $1;
-			$self->{code} =~ s/\%$barename/\%\{\$$barename\}/;
-			$self->{code} =~ s/\$$barename\s*\{/\$$barename->\{/;
+			$substitute = $self->{name} . "_" . $barename;
+			$self->{code} =~ s/\%$barename/\%\{\$$substitute\}/;
+			$self->{code} =~ s/\$$barename\s*\{/\$$substitute->\{/;
 		}
 
 		elsif ($shared =~ /^\$(.*)/) {
 			$barename = $1;
-			$self->{code} =~ s/\$$barename/\$\$$barename/;
+			$substitute = $self->{name} . "_" . $barename;
+			$self->{code} =~ s/\$$barename/\$\$$substitute/;
 		}
 
 		else {
@@ -63,7 +67,7 @@ sub gen_body {
 			next;
 		}
 
-		$shared_vars .= "my \$$barename = shift;\n";
+		$shared_vars .= "my \$$substitute = shift;\n";
 	}
 
 	return "sub " . $self->{name} . " {\n"
@@ -80,13 +84,30 @@ sub gen_body {
 sub gen_call {
 	my $self = shift;
 
-	local $, = ", ";
+	my $clones_name = "@" . $self->{name} . "_clones";
+	my $clones_str = "";
 
-	return '$_->enqueue(['
+	my $call = "";
+	my @clones = map { "shared_clone(\\$_)" } @{$self->{shared}};
+
+	if (@clones) {
+		$clones_str .= "my $clones_name = (";
+		$clones_str .= join(", ", @clones);
+		$clones_str .= ");";
+
+		$call .= "$clones_str\n";
+	}
+
+	$call .= '$_->enqueue(['
 		. 'POMP::CALL, '
 		. '__PACKAGE__ . "::' . $self->{name} . '"'
-		. ']) for (@POMP::POMP_QUEUES);'
 	;
+
+	if (@clones) {
+		$call .= ", $clones_name";
+	}
+
+	$call .= ']) for (@POMP::POMP_QUEUES);';
 }
 
 1;

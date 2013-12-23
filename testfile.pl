@@ -3,12 +3,18 @@ use warnings;
 
 my $truc = 1;
 
+my @bidule = ("lalalala", "lolololo");
+my @machin = ("hey", "yo!");
+my %toto   = (truc => "chouette", machin => "truc");
+my $tutu   = "this is tutu";
+
 #pomp_for
 # if($truc)
 # shared(@machin, %toto, $tutu)
 # private($truc, @bidule)
 # begin
 for (1..10) {
+	$truc = 10;
 	print "toto";
 	push @machin, "$truc";
 	$machin[3] = "$tutu";

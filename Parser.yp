@@ -92,6 +92,8 @@ my $line = 0;
 my $is_parsing = 0;  # set to true when a POMP command has been read. set to
                      # false when a corresponding #pomp_end has been read.
 
+my $cond_re = qr/[\$%@]\w[\w\d]+/; # may be a variable only
+
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
 
@@ -127,7 +129,7 @@ sub lex {
 	}
 
 	## CLAUSES
-	if ($$data =~ s/^if \s* \( \s* (\$\w+) \s* \)//x) {
+	if ($$data =~ s/^if \s* \( \s* ($cond_re) \s* \)//x) {
 		return ('IF', $1);
 	}
 

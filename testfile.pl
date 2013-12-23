@@ -5,7 +5,7 @@ my $truc = 1;
 
 #pomp_for
 # if($truc)
-# shared(@machin)
+# shared(@machin, %toto, $tutu)
 # private($truc, @bidule)
 # begin
 for (1..10) {

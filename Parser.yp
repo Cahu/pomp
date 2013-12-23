@@ -78,12 +78,12 @@ clause:
 	  IF      { { 'IF'      => $_[1] }; }
 	| SHARED  {
 		  my $tmp = $_[1];
-		  $tmp =~ s/\s//;
+		  $tmp =~ s/\s//g;
 	      return { 'SHARED'  => [ split(',', $tmp) ] };
 	  }
 	| PRIVATE {
 		  my $tmp = $_[1];
-		  $tmp =~ s/\s//;
+		  $tmp =~ s/\s//g;
 		  return { 'PRIVATE' => [ split(',', $tmp) ] };
 	  }
 	;

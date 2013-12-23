@@ -10,6 +10,9 @@ my $truc = 1;
 # begin
 for (1..10) {
 	print "toto";
+	push @machin, "$truc";
+	$machin[3] = "$tutu";
+	$toto{truc} = $truc;
 }
 #pomp_end
 

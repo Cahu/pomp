@@ -35,8 +35,44 @@ sub gen_body {
 	my $private_vars = "";
 	$private_vars   .= "my $_;\n" foreach (@{$self->{private}});
 
+	my $shared_vars = "";
+	foreach my $shared (@{$self->{shared}}) {
+		# Shared variables are passed by reference (result of shared_clone from
+		# threads::shared). We must substitute all occurences of these variables
+		# with the corresponding dereference instruction.
+		my $barename;
+		if ($shared =~ /^@(.*)/) {
+			$barename = $1;
+			$self->{code} =~ s/\@$barename/\@\{\$$barename\}/;
+			$self->{code} =~ s/\$$barename\s*\[/\$$barename->\[/;
+		}
+
+		elsif ($shared =~ /^%(.*)/) {
+			$barename = $1;
+			$self->{code} =~ s/\%$barename/\%\{\$$barename\}/;
+			$self->{code} =~ s/\$$barename\s*\{/\$$barename->\{/;
+		}
+
+		elsif ($shared =~ /^\$(.*)/) {
+			$barename = $1;
+			$self->{code} =~ s/\$$barename/\$\$$barename/;
+		}
+
+		else {
+			warn "Couldn't generate variable for '$shared'";
+			next;
+		}
+
+		$shared_vars .= "my \$$barename = shift;\n";
+	}
+
 	return "sub " . $self->{name} . " {\n"
-	     . POMP::Indent::indent($private_vars . $self->{code}) . "\n"
+	     . POMP::Indent::indent(
+			   $private_vars
+			 . $shared_vars
+			 . $self->{code}
+		 )
+		 . "\n"
 	     . "}\n";
 }
 

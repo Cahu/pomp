@@ -45,6 +45,12 @@ job:
 
 		  push @POMP_subs, $sub;
 
+		  if ($clauses_ref->{PRIVATE}) {
+			  my $tmp = $clauses_ref->{PRIVATE};
+			  $tmp =~ s/\s//;
+			  $sub->add_privates(split (',', $tmp));
+		  }
+
 		  if (my $cond = $clauses_ref->{IF}) {
 			  print POMP::Clause::gen_if(
 				  $cond,
@@ -129,7 +135,7 @@ sub lex {
 		return ('SHARED', $1);
 	}
 
-	if ($$data =~ s/^private \s* \( \s* (\@\w+) \s* \)//x) {
+	if ($$data =~ s/^private \s* \( \s* (.*?) \s* \)//x) {
 		return ('PRIVATE', $1);
 	}
 

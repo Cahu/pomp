@@ -6,6 +6,7 @@ my $truc = 1;
 #pomp_for
 # if($truc)
 # shared(@machin)
+# private($truc, @bidule)
 # begin
 for (1..10) {
 	print "toto";

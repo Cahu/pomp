@@ -18,9 +18,9 @@ sub new {
 }
 
 
-sub add_privates {
-	my ($self, @privates) = @_;
-	push @{$self->{private}},  @privates;
+sub add_private {
+	my ($self, @private) = @_;
+	push @{$self->{private}},  @private;
 }
 
 

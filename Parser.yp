@@ -45,11 +45,7 @@ job:
 
 		  push @POMP_subs, $sub;
 
-		  if ($clauses_ref->{PRIVATE}) {
-			  my $tmp = $clauses_ref->{PRIVATE};
-			  $tmp =~ s/\s//;
-			  $sub->add_privates(split (',', $tmp));
-		  }
+		  $sub->add_private(@{$clauses_ref->{PRIVATE}});
 
 		  if (my $cond = $clauses_ref->{IF}) {
 			  print POMP::Clause::gen_if(
@@ -80,7 +76,11 @@ clauses:
 clause:
 	  IF      { { 'IF'      => $_[1] }; }
 	| SHARED  { { 'SHARED'  => $_[1] }; }
-	| PRIVATE { { 'PRIVATE' => $_[1] }; }
+	| PRIVATE {
+		  my $tmp = $_[1];
+		  $tmp =~ s/\s//;
+		  return { 'PRIVATE' => [ split(',', $tmp) ] };
+	  }
 	;
 
 

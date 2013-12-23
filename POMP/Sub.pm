@@ -18,6 +18,12 @@ sub new {
 }
 
 
+sub add_shared {
+	my ($self, @shared) = @_;
+	push @{$self->{shared}},  @shared;
+}
+
+
 sub add_private {
 	my ($self, @private) = @_;
 	push @{$self->{private}},  @private;

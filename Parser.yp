@@ -45,6 +45,7 @@ job:
 
 		  push @POMP_subs, $sub;
 
+		  $sub->add_shared (@{$clauses_ref->{SHARED} });
 		  $sub->add_private(@{$clauses_ref->{PRIVATE}});
 
 		  if (my $cond = $clauses_ref->{IF}) {
@@ -75,7 +76,11 @@ clauses:
 
 clause:
 	  IF      { { 'IF'      => $_[1] }; }
-	| SHARED  { { 'SHARED'  => $_[1] }; }
+	| SHARED  {
+		  my $tmp = $_[1];
+		  $tmp =~ s/\s//;
+	      return { 'SHARED'  => [ split(',', $tmp) ] };
+	  }
 	| PRIVATE {
 		  my $tmp = $_[1];
 		  $tmp =~ s/\s//;
@@ -133,7 +138,7 @@ sub lex {
 		return ('IF', $1);
 	}
 
-	if ($$data =~ s/^shared \s* \( \s* (\@\w+) \s* \)//x) {
+	if ($$data =~ s/^shared \s* \( \s* (.*?) \s* \)//x) {
 		return ('SHARED', $1);
 	}
 

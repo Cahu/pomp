@@ -89,8 +89,8 @@ my $is_parsing = 0;  # set to true when a POMP command has been read. set to
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
 
-	# remove leading spaces when parsing a POMP command
-	$$data =~ s/^\s*// if ($is_parsing);
+	# remove leading spaces or line breaks when parsing a POMP command
+	$$data =~ s/^[\s#]*// if ($is_parsing);
 
 	# nothing else to read
 	return ('', undef) unless (length $$data);

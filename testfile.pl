@@ -3,14 +3,19 @@ use warnings;
 
 my $truc = 1;
 
-#pomp_for if($truc) shared(@machin) begin
+#pomp_for
+# if($truc)
+# shared(@machin)
+# begin
 for (1..10) {
 	print "toto";
 }
 #pomp_end
 
 sub foo {
-	#pomp_parallel if($truc) begin
+	#pomp_parallel
+	# if($truc)
+	# begin
 	{
 		for (1..10) {
 			print "tata $_\n";

@@ -41,7 +41,7 @@ job:
 		  ++$counts{$directive};
 
 		  my $subname = $directive . $counts{$directive};
-		  my $sub = POMP::Sub->new($subname, [], $code);
+		  my $sub = POMP::Sub->new($subname, $code);
 
 		  push @POMP_subs, $sub;
 

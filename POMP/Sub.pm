@@ -7,10 +7,9 @@ use POMP::Indent;
 
 
 sub new {
-	my ($class, $sub_name, $args, $code) = @_;
+	my ($class, $sub_name, $code) = @_;
 	return bless {
 		name    => $sub_name,
-		args    => $args,
 		code    => $code,
 		private => [],
 		shared  => [],
@@ -50,7 +49,6 @@ sub gen_call {
 	return '$_->enqueue(['
 		. 'POMP::CALL, '
 		. '__PACKAGE__ . "::' . $self->{name} . '"'
-		. ', ' . "@{$self->{args}}"
 		. ']) for (@POMP::POMP_QUEUES);'
 	;
 }

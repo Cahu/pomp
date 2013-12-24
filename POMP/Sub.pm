@@ -112,6 +112,9 @@ sub gen_call {
 		$call .= "$shared = $sigil\{$clone_name\};\n";
 	}
 
+	# Synchronize
+	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';
+
 	return $call;
 }
 

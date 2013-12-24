@@ -84,30 +84,35 @@ sub gen_body {
 sub gen_call {
 	my $self = shift;
 
-	my $clones_name = "@" . $self->{name} . "_clones";
-	my $clones_str = "";
-
+	my @clones;
 	my $call = "";
-	my @clones = map { "shared_clone(\\$_)" } @{$self->{shared}};
 
-	if (@clones) {
-		$clones_str .= "my $clones_name = (";
-		$clones_str .= join(", ", @clones);
-		$clones_str .= ");";
-
-		$call .= "$clones_str\n";
+	for my $shared (@{$self->{shared}}) {
+		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
+		my $clone_name = "\$" . $self->{name} . "_$name";
+		$call .= "my $clone_name = shared_clone(\\$shared);\n";
+		push @clones, $clone_name;
 	}
 
+	# start the enqueue instruction
 	$call .= '$_->enqueue(['
 		. 'POMP::CALL, '
 		. '__PACKAGE__ . "::' . $self->{name} . '"'
 	;
 
-	if (@clones) {
-		$call .= ", $clones_name";
+	# Add clones as argument
+	$call .= ", $_" for (@clones);
+
+	# terminate the enqueue instruction
+	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";
+
+	for my $shared (@{$self->{shared}}) {
+		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
+		my $clone_name = "\$" . $self->{name} . "_$name";
+		$call .= "$shared = $sigil\{$clone_name\};\n";
 	}
 
-	$call .= ']) for (@POMP::POMP_QUEUES);';
+	return $call;
 }
 
 1;

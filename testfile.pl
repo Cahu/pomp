@@ -25,6 +25,7 @@ for (1..10) {
 sub foo {
 	#pomp_parallel
 	# if($truc)
+	# shared($truc)
 	# begin
 	{
 		for (1..10) {

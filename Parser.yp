@@ -20,7 +20,17 @@ our %counts;
 %token PRIVATE
 
 %token CODE
+%token CODE_START
 %token UNHANDLED_CODE
+
+%token LPAREN
+%token RPAREN
+%token SEMICOLON
+
+%token PERL_MY
+%token PERL_FOR
+%token PERL_FOREACH
+%token PERL_EXPR
 
 %%
 
@@ -33,10 +43,10 @@ job:
 		  print $_[1];
 	  }
 
-	| directive clauses CODE {
+	| directive clauses CODE_START declaration CODE {
 		  my $directive   = $_[1];
 		  my $clauses_ref = $_[2];
-		  my $code        = $_[3];
+		  my $code        = $_[5];
 
 		  ++$counts{$directive};
 
@@ -88,12 +98,27 @@ clause:
 	  }
 	;
 
+declaration:
+	  # empty
+	| perl_foreach PERL_MY var LPAREN exprs RPAREN
+	| PERL_FOR     LPAREN exprs SEMICOLON exprs SEMICOLON exprs RPAREN
+	;
+
+perl_foreach:
+	  PERL_FOR
+	| PERL_FOREACH
+	;
+
+exprs:
+	| exprs PERL_EXPR
+	;
 
 %%
 
 use Data::Dumper;
 
 my $line = 0;
+my $began = 0;
 my $is_parsing = 0;  # set to true when a POMP command has been read. set to
                      # false when a corresponding #pomp_end has been read.
 
@@ -102,6 +127,9 @@ my $cond_re = $var_re; # may be a variable only
 
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
+
+	# sanity check
+	die "Sanity check failed" if ($began && !$is_parsing);
 
 	# remove leading spaces or line breaks when parsing a POMP command
 	$$data =~ s/^[\s#]*// if ($is_parsing);
@@ -121,30 +149,67 @@ sub lex {
 	}
 
 	## CODE
+	if ($$data =~ s/^begin// && $is_parsing) {
+		$began = 1;
+		return ('CODE_START', undef);
+	}
+
 	if ($$data =~ s/
-			^begin \s*   \n     # 'begin' is on a commented line, \n mandatory
-			\s* (.*?)           # possible loop declaration
-			\s* { [^\n]* \n     # keep indentation of the first line
+			^{ [^\n]* \n         # keep indentation of the first line
 			(.*?)               # get all the code within the block
 			\s* } \s*           # remove useless spaces
 			\n \s* \#pomp_end   # '#pomp_end' on a new line, possibly indented
-		//sx && $is_parsing
+		//sx && $began
 	) {
+		$began = 0;
 		$is_parsing = 0;
-		return ('CODE', POMP::Indent::reindent($2));
+		return ('CODE', POMP::Indent::reindent($1));
+	}
+
+	## Perl syntax subset
+	if ($began) {
+		if ($$data =~ s/^for//) {
+			return ('PERL_FOR', undef);
+		}
+
+		if ($$data =~ s/^foreach//) {
+			return ('PERL_FOREACH', undef);
+		}
+
+		if ($$data =~ s/^my//) {
+			return ('PERL_MY', undef);
+		}
+
+		if ($$data =~ s/^\(//) {
+			return ('LPAREN', undef);
+		}
+
+		if ($$data =~ s/^\)//) {
+			return ('RPAREN', undef);
+		}
+
+		if ($$data =~ s/^;//) {
+			return ('SEMICOLON', undef);
+		}
+
+		#if ($$data =~ s/^(.*?) //) {
+		#	return ('PERL_EXPR', $1);
+		#}
 	}
 
 	## CLAUSES
-	if ($$data =~ s/^if \s* \( \s* ($cond_re) \s* \)//x) {
-		return ('IF', $1);
-	}
+	elsif ($is_parsing) {
+		if ($$data =~ s/^if \s* \( \s* ($cond_re) \s* \)//x) {
+			return ('IF', $1);
+		}
 
-	if ($$data =~ s/^shared \s* \( \s* (.*?) \s* \)//x) {
-		return ('SHARED', $1);
-	}
+		if ($$data =~ s/^shared \s* \( \s* (.*?) \s* \)//x) {
+			return ('SHARED', $1);
+		}
 
-	if ($$data =~ s/^private \s* \( \s* (.*?) \s* \)//x) {
-		return ('PRIVATE', $1);
+		if ($$data =~ s/^private \s* \( \s* (.*?) \s* \)//x) {
+			return ('PRIVATE', $1);
+		}
 	}
 
 	# end of recognized POMP langage

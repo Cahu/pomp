@@ -106,14 +106,15 @@ sub gen_call {
 	# terminate the enqueue instruction
 	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";
 
+	# Synchronize
+	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';
+
+	# copy back values
 	for my $shared (@{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 		my $clone_name = "\$" . $self->{name} . "_$name";
-		$call .= "$shared = $sigil\{$clone_name\};\n";
+		$call .= "\n$shared = $sigil\{$clone_name\};";
 	}
-
-	# Synchronize
-	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';
 
 	return $call;
 }

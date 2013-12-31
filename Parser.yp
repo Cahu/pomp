@@ -65,7 +65,7 @@ directive:
 	;
 
 clauses:
-	                  { {}; }
+	                  { {}; }  # empty
 	| clauses clause  {
 	      while (my ($key, $val) = each %{$_[2]}) {
 			  $_[1]->{$key} = $val;
@@ -75,7 +75,7 @@ clauses:
 	;
 
 clause:
-	  IF      { { 'IF'      => $_[1] }; }
+	  IF      { { 'IF' => $_[1] }; }
 	| SHARED  {
 		  my $tmp = $_[1];
 		  $tmp =~ s/\s//g;
@@ -97,7 +97,8 @@ my $line = 0;
 my $is_parsing = 0;  # set to true when a POMP command has been read. set to
                      # false when a corresponding #pomp_end has been read.
 
-my $cond_re = qr/[\$%@]\w[\w\d]+/; # may be a variable only
+my $var_re  = qr/[\$%@]\w[\w\d]+/;
+my $cond_re = $var_re; # may be a variable only
 
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};

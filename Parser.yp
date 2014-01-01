@@ -23,14 +23,8 @@ our %counts;
 %token CODE_START
 %token UNHANDLED_CODE
 
-%token LPAREN
-%token RPAREN
-%token SEMICOLON
-
-%token PERL_MY
 %token PERL_FOR
 %token PERL_FOREACH
-%token PERL_EXPR
 
 %%
 
@@ -100,22 +94,13 @@ clause:
 
 declaration:
 	  # empty
-	| perl_foreach PERL_MY var LPAREN exprs RPAREN
-	| PERL_FOR     LPAREN exprs SEMICOLON exprs SEMICOLON exprs RPAREN
-	;
-
-perl_foreach:
-	  PERL_FOR
-	| PERL_FOREACH
-	;
-
-exprs:
-	| exprs PERL_EXPR
+	| PERL_FOREACH { say "foreach $_[1]"; }
+	| PERL_FOR     { say "for $_[1]"; }
 	;
 
 %%
 
-use Data::Dumper;
+use Text::Balanced qw(extract_codeblock);
 
 my $line = 0;
 my $began = 0;
@@ -155,7 +140,7 @@ sub lex {
 	}
 
 	if ($$data =~ s/
-			^{ [^\n]* \n         # keep indentation of the first line
+			^{ [^\n]* \n        # keep indentation of the first line
 			(.*?)               # get all the code within the block
 			\s* } \s*           # remove useless spaces
 			\n \s* \#pomp_end   # '#pomp_end' on a new line, possibly indented
@@ -168,32 +153,21 @@ sub lex {
 
 	## Perl syntax subset
 	if ($began) {
-		if ($$data =~ s/^for//) {
-			return ('PERL_FOR', undef);
+		if ($$data =~ s/^for(?:each)?\s+(?:(?:my\s+)?$var_re)?\s*\(/(/) {
+			return (
+				'PERL_FOREACH',
+				# extract content and remove delimiters
+				substr(extract_codeblock($$data, '('), 1, -1)
+			);
 		}
 
-		if ($$data =~ s/^foreach//) {
-			return ('PERL_FOREACH', undef);
-		}
-
-		if ($$data =~ s/^my//) {
-			return ('PERL_MY', undef);
-		}
-
-		if ($$data =~ s/^\(//) {
-			return ('LPAREN', undef);
-		}
-
-		if ($$data =~ s/^\)//) {
-			return ('RPAREN', undef);
-		}
-
-		if ($$data =~ s/^;//) {
-			return ('SEMICOLON', undef);
-		}
-
-		#if ($$data =~ s/^(.*?) //) {
-		#	return ('PERL_EXPR', $1);
+		# 'for (expr; expr; expr)' not supported yet
+		#if ($$data =~ s/^for\s*\(/(/) {
+		#	return (
+		#		'PERL_FOR',
+		#		# extract content and remove delimiters
+		#		substr(extract_codeblock($$data, '('), 1, -1)
+		#	);
 		#}
 	}
 

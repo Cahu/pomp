@@ -40,25 +40,20 @@ sub gen_body {
 		# Shared variables are passed by reference (result of shared_clone from
 		# threads::shared). We must substitute all occurences of these variables
 		# with the corresponding dereference instruction.
-		my $barename;
-		my $substitute;
-		if ($shared =~ /^@(.*)/) {
-			$barename = $1;
-			$substitute = $self->{name} . "_" . $barename;
+		my ($barename) = ($shared =~ /^[\$@%](.*)/);
+		my $substitute = $self->{name} . "_" . $barename;
+
+		if ($shared =~ /^@/) {
 			$self->{code} =~ s/\@$barename/\@\{\$$substitute\}/;
 			$self->{code} =~ s/\$$barename\s*\[/\$$substitute->\[/;
 		}
 
-		elsif ($shared =~ /^%(.*)/) {
-			$barename = $1;
-			$substitute = $self->{name} . "_" . $barename;
+		elsif ($shared =~ /^%/) {
 			$self->{code} =~ s/\%$barename/\%\{\$$substitute\}/;
 			$self->{code} =~ s/\$$barename\s*\{/\$$substitute->\{/;
 		}
 
-		elsif ($shared =~ /^\$(.*)/) {
-			$barename = $1;
-			$substitute = $self->{name} . "_" . $barename;
+		elsif ($shared =~ /^\$/) {
 			$self->{code} =~ s/\$$barename/\$\$$substitute/;
 		}
 

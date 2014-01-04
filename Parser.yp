@@ -189,7 +189,7 @@ sub lex {
 	# end of recognized POMP langage
 	$_[0]->YYError if ($is_parsing);
 
-	$$data =~ s/(.*?)#/#/s;
+	$$data =~ s/(.*?[^#])#/#/s; # #pomp_* commands can be commented out too!
 	if ($1) {
 		# skip code until next '#'
 		return ('UNHANDLED_CODE', $1);

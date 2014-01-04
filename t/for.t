@@ -8,6 +8,12 @@ for my $var (1..10) {
 }
 #pomp_end
 
+##pomp_for begin
+#{
+#	print "truc";
+#}
+##pomp_end
+
 #pomp_for begin
 foreach my $truc (@machin) {
 	print $truc;

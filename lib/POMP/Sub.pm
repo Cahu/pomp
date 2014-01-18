@@ -13,6 +13,7 @@ sub new {
 		code    => $code,
 		private => [],
 		shared  => [],
+		loop    => undef,
 	}, $class;
 }
 
@@ -26,6 +27,12 @@ sub add_shared {
 sub add_private {
 	my ($self, @private) = @_;
 	push @{$self->{private}},  @private;
+}
+
+
+sub add_loop {
+	my ($self, $expr) = @_;
+	${$self->{loop}} = $expr;
 }
 
 
@@ -82,6 +89,7 @@ sub gen_call {
 	my @clones;
 	my $call = "";
 
+	# generate shared clones
 	for my $shared (@{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 		my $clone_name = "\$" . $self->{name} . "_$name";
@@ -94,6 +102,9 @@ sub gen_call {
 		. 'POMP::CALL, '
 		. '__PACKAGE__ . "::' . $self->{name} . '"'
 	;
+
+	# Add subset of loop values as the first argument
+	# TODO
 
 	# Add clones as argument
 	$call .= ", $_" for (@clones);

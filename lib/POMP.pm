@@ -3,6 +3,8 @@ package POMP;
 use threads;
 use Thread::Queue;
 
+our $VERSION = 0.1;
+
 our @POMP_THREADS;
 our @POMP_IN_QUEUES;
 our @POMP_OUT_QUEUES;

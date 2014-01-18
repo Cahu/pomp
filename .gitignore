@@ -1,4 +1,8 @@
 Parser.pm
+Makefile
+Makefile.old
+
+blib/
 
 *.swp
 *.swo

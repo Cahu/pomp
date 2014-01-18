@@ -1,0 +1,14 @@
+Makefile.PL
+MANIFEST
+README
+Parser.yp
+compiler.pl
+t/POMP.t
+lib/POMP.pm
+lib/POMP/Sub.pm
+lib/POMP/Indent.pm
+lib/POMP/Clause.pm
+samples/for.t
+samples/parallel_print.t
+samples/parallel_private.t
+samples/parallel_shared.t

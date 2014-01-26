@@ -206,6 +206,8 @@ sub lex {
 }
 
 sub error {
-	my $data = \$_[0]->YYData->{DATA};
-	print "Error found: '" . ($$data =~ s/(.*?)\n/$1/rs) . "'\n";
+	my ($parser_ref, $error) = @_;
+	my $data = \$parser_ref->YYData->{DATA};
+	print "Error: $error\n" if ($error);
+	print "Error Around: '" . ($$data =~ s/(.*?)\n/$1/rs) . "'\n";
 }

@@ -13,7 +13,7 @@ sub new {
 		code    => $code,
 		private => [],
 		shared  => [],
-		loop    => undef,
+		foreach => undef,
 	}, $class;
 }
 
@@ -30,9 +30,12 @@ sub add_private {
 }
 
 
-sub add_loop {
-	my ($self, $expr) = @_;
-	${$self->{loop}} = $expr;
+sub add_foreach {
+	my ($self, $var_name, $list_expr) = @_;
+	$self->{foreach} = {
+		var_name  => $var_name,
+		list_expr => $list_expr,
+	};
 }
 
 
@@ -72,14 +75,45 @@ sub gen_body {
 		$shared_vars .= "my \$$substitute = shift;\n";
 	}
 
+	my $body = "";
+
+	# private and shared local variables
+	$body .= $private_vars . $shared_vars;
+
+	# foreach loops
+	if ($self->{foreach}) {
+		my $var_name  = $self->{foreach}->{var_name};
+		my $list_expr = $self->{foreach}->{list_expr};
+
+		# last argument is the foreach list
+		$body .= "my $list_expr = \@_;\n";
+
+		my $start_var = "\$$self->{name}_foreach_start";
+		my $end_var   = "\$$self->{name}_foreach_end";
+
+		$body .= "my $start_var = "
+			. "threads->self()->tid()*(scalar $list_expr)"
+			. "/"
+			. "\$POMP::POMP_NUM_THREADS;\n";
+		$body .= "my $end_var = "
+			. "(1+threads->self()->tid())*(scalar $list_expr)"
+			. "/"
+			. "\$POMP::POMP_NUM_THREADS;\n";
+		$body .= "for"
+			. ($var_name ? " my $var_name " : " ")
+			. "($list_expr\[$start_var .. $end_var-1\]) { \n";
+		$body .= POMP::Indent::indent($self->{code}) . "\n";
+		$body .= "}";
+	}
+
+	else {
+		$body .= $self->{code};
+	}
+
 	return "sub " . $self->{name} . " {\n"
-	     . POMP::Indent::indent(
-			   $private_vars
-			 . $shared_vars
-			 . $self->{code}
-		 )
-		 . "\n"
-	     . "}\n";
+		. POMP::Indent::indent($body) . "\n"
+		. "}\n"
+	;
 }
 
 
@@ -108,6 +142,11 @@ sub gen_call {
 
 	# Add clones as argument
 	$call .= ", $_" for (@clones);
+
+	if ($self->{foreach}) {
+		# last argument is the foreach list
+		$call .= ", $self->{foreach}->{list_expr}";
+	}
 
 	# terminate the enqueue instruction
 	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";

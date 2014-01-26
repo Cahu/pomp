@@ -23,7 +23,6 @@ our %counts;
 %token CODE_START
 %token UNHANDLED_CODE
 
-%token PERL_FOR
 %token PERL_FOREACH
 
 %%
@@ -40,8 +39,15 @@ job:
 	| directive clauses CODE_START declaration CODE {
 		  my $directive   = $_[1];
 		  my $clauses_ref = $_[2];
+		  my $declaration = $_[4];
 		  my $code        = $_[5];
 
+		  # for directives must have a list declaration
+		  if ($directive eq "for" && !defined $declaration) {
+			  $_[0]->YYError;
+		  }
+
+		  # directive count
 		  ++$counts{$directive};
 
 		  my $subname = $directive . $counts{$directive};
@@ -51,6 +57,10 @@ job:
 
 		  $sub->add_shared (@{$clauses_ref->{SHARED} });
 		  $sub->add_private(@{$clauses_ref->{PRIVATE}});
+
+		  if ($directive eq "for") {
+			  $sub->add_foreach(@$declaration);
+		  }
 
 		  if (my $cond = $clauses_ref->{IF}) {
 			  print POMP::Clause::gen_if(
@@ -94,8 +104,7 @@ clause:
 
 declaration:
 	  # empty
-	| PERL_FOREACH { say "foreach $_[1]"; }
-	| PERL_FOR     { say "for $_[1]"; }
+	| PERL_FOREACH { $_[1]; }
 	;
 
 %%
@@ -107,8 +116,10 @@ my $began = 0;
 my $is_parsing = 0;  # set to true when a POMP command has been read. set to
                      # false when a corresponding #pomp_end has been read.
 
-my $var_re  = qr/[\$%@]\w[\w\d]+/;
-my $cond_re = $var_re; # may be a variable only
+my $var_re    = qr/[\$%@]\w[\w\d]+/;
+my $scalar_re = qr/\$\w[\w\d]+/;
+my $list_re   = qr/@\w[\w\d]+/;
+my $cond_re   = $var_re; # may be a variable only
 
 sub lex {
 	my $data = \$_[0]->YYData->{DATA};
@@ -153,22 +164,15 @@ sub lex {
 
 	## Perl syntax subset
 	if ($began) {
-		if ($$data =~ s/^for(?:each)?\s+(?:(?:my\s+)?$var_re)?\s*\(/(/) {
-			return (
-				'PERL_FOREACH',
-				# extract content and remove delimiters
-				substr(extract_codeblock($$data, '('), 1, -1)
-			);
+		# foreach(@list)
+		if ($$data =~ s/
+				^for(?:each)? \s+           # for or foreach
+				(?:my \s+ ($var_re))? \s*   # my $var
+				\(($list_re)\)              # (list)
+				//x
+		) {
+			return ('PERL_FOREACH', [$1, $2]);
 		}
-
-		# 'for (expr; expr; expr)' not supported yet
-		#if ($$data =~ s/^for\s*\(/(/) {
-		#	return (
-		#		'PERL_FOR',
-		#		# extract content and remove delimiters
-		#		substr(extract_codeblock($$data, '('), 1, -1)
-		#	);
-		#}
 	}
 
 	## CLAUSES

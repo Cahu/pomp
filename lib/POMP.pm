@@ -1,5 +1,6 @@
 package POMP;
 
+use strict;
 use threads;
 use Thread::Queue;
 
@@ -18,7 +19,7 @@ use constant {
 
 # consumer function
 sub POMP_CONSUMER {
-	my $self  = threads->self();
+	my $self = threads->self();
 	my ($in_queue, $out_queue) = @_;
 	#print "Thread " . $self->tid() . " started.\n";
 
@@ -26,7 +27,6 @@ sub POMP_CONSUMER {
 		my ($code, $sub, @sub_args) = @$instr;
 
 		if ($code == CALL) {
-			#print "Thread " . $self->tid() . " runs a job.\n";
 			# It's not possible to pass code refs to queues. We have to
 			# disable strict ref to use the name (string) of the sub instead.
 			no strict 'refs';
@@ -46,15 +46,15 @@ sub POMP_CONSUMER {
 
 INIT {
 	# Create queues and spawn threads
-	@POMP_IN_QUEUES  = map { Thread::Queue->new(); } (0..$POMP_NUM_THREADS-1);
-	@POMP_OUT_QUEUES = map { Thread::Queue->new(); } (0..$POMP_NUM_THREADS-1);
+	@POMP_IN_QUEUES  = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS-1);
+	@POMP_OUT_QUEUES = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS-1);
 	@POMP_THREADS = map {
 		threads->create(
 			\&POMP_CONSUMER,
 			$POMP_IN_QUEUES[$_],
 			$POMP_OUT_QUEUES[$_],
 		);
-	} (0..$POMP_NUM_THREADS-1);
+	} (0..$POMP_NUM_THREADS-2);
 }
 
 

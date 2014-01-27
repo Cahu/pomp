@@ -137,19 +137,22 @@ sub gen_call {
 		. '__PACKAGE__ . "::' . $self->{name} . '"'
 	;
 
-	# Add subset of loop values as the first argument
-	# TODO
-
 	# Add clones as argument
-	$call .= ", $_" for (@clones);
+	my $args_str = "";
+	$args_str .= join (", ", @clones);
 
+	# last argument is the foreach list
 	if ($self->{foreach}) {
-		# last argument is the foreach list
-		$call .= ", $self->{foreach}->{list_expr}";
+		$args_str .= ", " if (length $args_str > 0);
+		$args_str .= "$self->{foreach}->{list_expr}";
 	}
 
 	# terminate the enqueue instruction
+	$call .= ", $args_str" if ($args_str);
 	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";
+
+	# make the main thread call the same function
+	$call .= "$self->{name}($args_str);\n";
 
 	# Synchronize
 	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';

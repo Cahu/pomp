@@ -7,7 +7,8 @@ my @list = 1..10;
 #pomp_for shared(@truc) begin
 for (@list) {
 	$truc[1] = 10;
-	print $_ . "\n";
+	print $_ . "\n"
+	;
 }
 #pomp_end
 
@@ -17,14 +18,16 @@ for (@list) {
 #}
 ##pomp_end
 
-##pomp_for begin
-#foreach my $truc (@machin) {
-#	print $truc;
-#}
-##pomp_end
-#
-##pomp_for begin
-#for (@machin) {
-#	print $_;
-#}
-##pomp_end
+my @machin = 'a' .. 'g';
+
+#pomp_for begin
+foreach my $truc (@machin) {
+	print "$truc\n";
+}
+#pomp_end
+
+#pomp_for begin
+for (@machin) {
+	print "$_\n";
+}
+#pomp_end

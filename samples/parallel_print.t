@@ -3,6 +3,6 @@ use warnings;
 
 #pomp_parallel begin
 {
-	print "toto";
+	print "toto\n";
 }
 #pomp_end

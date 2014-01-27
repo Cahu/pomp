@@ -91,17 +91,20 @@ sub gen_body {
 		my $start_var = "\$$self->{name}_foreach_start";
 		my $end_var   = "\$$self->{name}_foreach_end";
 
+		# strategy = distribute the same amount of indices to each thread
 		$body .= "my $start_var = "
-			. "threads->self()->tid()*(scalar $list_expr)"
+			. "threads->tid()*(scalar $list_expr)"
 			. "/"
 			. "\$POMP::POMP_NUM_THREADS;\n";
 		$body .= "my $end_var = "
-			. "(1+threads->self()->tid())*(scalar $list_expr)"
+			. "(1+threads->tid())*(scalar $list_expr)"
 			. "/"
-			. "\$POMP::POMP_NUM_THREADS;\n";
+			. "\$POMP::POMP_NUM_THREADS - 1;\n";
+
+		# for my $var (@list) { ... }
 		$body .= "for"
 			. ($var_name ? " my $var_name " : " ")
-			. "($list_expr\[$start_var .. $end_var-1\]) { \n";
+			. "($list_expr\[$start_var .. $end_var\]) { \n";
 		$body .= POMP::Indent::indent($self->{code}) . "\n";
 		$body .= "}";
 	}
@@ -112,8 +115,7 @@ sub gen_body {
 
 	return "sub " . $self->{name} . " {\n"
 		. POMP::Indent::indent($body) . "\n"
-		. "}\n"
-	;
+		. "}\n";
 }
 
 

@@ -21,7 +21,6 @@ use constant {
 sub POMP_CONSUMER {
 	my $self = threads->self();
 	my ($in_queue, $out_queue) = @_;
-	#print "Thread " . $self->tid() . " started.\n";
 
 	while (my $instr = $in_queue->dequeue()) {
 		my ($code, $sub, @sub_args) = @$instr;
@@ -39,8 +38,6 @@ sub POMP_CONSUMER {
 
 		$out_queue->enqueue(1); # Signal done
 	}
-
-	#print "Thread " . $self->tid() . " stoped.\n";
 }
 
 

@@ -83,7 +83,7 @@ clauses:
 	                  { {}; }  # empty
 	| clauses clause  {
 	      while (my ($key, $val) = each %{$_[2]}) {
-			  $_[1]->{$key} = $val;
+			  push @{ $_[1]->{$key} }, @$val;
 		  }
 		  $_[1];
 	  }

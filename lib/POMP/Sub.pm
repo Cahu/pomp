@@ -88,8 +88,8 @@ sub gen_body {
 		# last argument is the foreach list
 		$body .= "my $list_expr = \@_;\n";
 
-		my $start_var = "\$$self->{name}_foreach_start";
-		my $end_var   = "\$$self->{name}_foreach_end";
+		my $start_var = "\$POMP_FOREACH_START";
+		my $end_var   = "\$POMP_FOREACH_END";
 
 		# strategy = distribute the same amount of indices to each thread
 		$body .= "my $start_var = "

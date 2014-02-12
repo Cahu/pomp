@@ -11,13 +11,14 @@ our @POMP_subs;
 our %counts;
 %}
 
-%token IF
-
 %token FOR
 %token PARALLEL
 
+%token IF
 %token SHARED
 %token PRIVATE
+%token COMMA
+%token VAR
 
 %token CODE
 %token CODE_START
@@ -89,22 +90,31 @@ clauses:
 	;
 
 clause:
-	  IF      { { 'IF' => $_[1] }; }
-	| SHARED  {
-		  my $tmp = $_[1];
-		  $tmp =~ s/\s//g;
-	      return { 'SHARED'  => [ split(',', $tmp) ] };
+	  IF LPAREN VAR RPAREN {
+		  { 'IF' => $_[3] };
 	  }
-	| PRIVATE {
-		  my $tmp = $_[1];
-		  $tmp =~ s/\s//g;
-		  return { 'PRIVATE' => [ split(',', $tmp) ] };
+	| SHARED LPAREN vars RPAREN {
+	      { 'SHARED'  => $_[3] };
+	  }
+	| PRIVATE LPAREN vars RPAREN {
+		  { 'PRIVATE' => $_[3] };
 	  }
 	;
 
 declaration:
 	  # empty
 	| PERL_FOREACH { $_[1]; }
+	;
+
+vars:
+	  # empty
+	| vars COMMA VAR {
+		  push @{ $_[1] }, $_[3];
+		  $_[1];
+	  }
+	| VAR {
+		  [ $_[1] ];
+	  }
 	;
 
 %%
@@ -178,16 +188,32 @@ sub lex {
 
 	## CLAUSES
 	elsif ($is_parsing) {
-		if ($$data =~ s/^if \s* \( \s* ($cond_re) \s* \)//x) {
-			return ('IF', $1);
+		if ($$data =~ s/^if//) {
+			return ('IF', undef);
 		}
 
-		if ($$data =~ s/^shared \s* \( \s* (.*?) \s* \)//x) {
-			return ('SHARED', $1);
+		if ($$data =~ s/^shared//) {
+			return ('SHARED', undef);
 		}
 
-		if ($$data =~ s/^private \s* \( \s* (.*?) \s* \)//x) {
-			return ('PRIVATE', $1);
+		if ($$data =~ s/^private//) {
+			return ('PRIVATE', undef);
+		}
+
+		if ($$data =~ s/^,//) {
+			return ('COMMA', undef);
+		}
+
+		if ($$data =~ s/^\(//) {
+			return ('LPAREN', undef);
+		}
+
+		if ($$data =~ s/^\)//) {
+			return ('RPAREN', undef);
+		}
+
+		if ($$data =~ s/^($var_re)//) {
+			return ('VAR', $1);
 		}
 	}
 

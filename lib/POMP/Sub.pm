@@ -122,7 +122,7 @@ sub gen_body {
 	}
 
 	return "sub " . $self->{name} . " {\n"
-		. POMP::Indent::indent($body) . "\n"
+		. POMP::Indent::indent($body)
 		. "}\n";
 }
 

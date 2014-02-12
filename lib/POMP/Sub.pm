@@ -110,11 +110,11 @@ sub gen_body {
 		);
 
 		# for my $var (@list) { ... }
-		$body .= "for"
-			. ($var_name ? " my $var_name " : " ")
-			. "($list_expr\[$start_var .. $end_var\]) { \n";
-		$body .= POMP::Indent::indent($self->{code}) . "\n";
-		$body .= "}";
+		$body .= _gen_for(
+			$var_name,
+			"$list_expr\[$start_var .. $end_var\]",
+			$self->{code}
+		);
 	}
 
 	else {
@@ -192,6 +192,14 @@ sub _gen_if_else {
 		. POMP::Indent::indent($body1)
 		. "} else {\n"
 		. POMP::Indent::indent($body2)
+		. "}\n";
+}
+
+sub _gen_for {
+	my ($var_expr, $list_expr, $body) = @_;
+
+	return "for" . ($var_expr ? " my $var_expr " : " ") . "($list_expr) {\n"
+		. POMP::Indent::indent($body)
 		. "}\n";
 }
 

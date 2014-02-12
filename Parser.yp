@@ -151,8 +151,9 @@ sub lex {
 	}
 
 	if ($$data =~ s/
-			^{ [^\n]* \n        # keep indentation of the first line
-			(.*?)               # get all the code within the block
+			^{ (?:[ \t]* \n)?   # Remove spaces after '{'
+			                    # but keep indentation of the first line.
+			(.*?)               # Get all the code within the block
 			} \s*
 			\n \s* \#pomp_end   # '#pomp_end' on a new line, possibly indented
 		//sx && $began

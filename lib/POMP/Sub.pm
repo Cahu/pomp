@@ -92,14 +92,22 @@ sub gen_body {
 		my $end_var   = "\$POMP_FOREACH_END";
 
 		# strategy = distribute the same amount of indices to each thread
-		$body .= "my $start_var = "
-			. "threads->tid()*(scalar $list_expr)"
-			. "/"
-			. "\$POMP::POMP_NUM_THREADS;\n";
-		$body .= "my $end_var = "
-			. "(1+threads->tid())*(scalar $list_expr)"
-			. "/"
-			. "\$POMP::POMP_NUM_THREADS - 1;\n";
+		$body .= "return if (threads->tid()+1 > $list_expr);\n";
+		$body .= "my $start_var;\n";
+		$body .= "my $end_var;\n";
+		$body .= _gen_if_else(
+			"\$POMP::POMP_NUM_THREADS >= $list_expr",
+
+			  "$start_var = threads->tid();\n"
+			. "$end_var   = threads->tid();\n",
+
+			  "$start_var = int("
+			. "threads->tid()*$list_expr" . "/" . "\$POMP::POMP_NUM_THREADS"
+			. ");\n"
+			. "$end_var   = int("
+			. "(1+threads->tid())*$list_expr" . "/" . "\$POMP::POMP_NUM_THREADS-1"
+			. ");\n"
+		);
 
 		# for my $var (@list) { ... }
 		$body .= "for"

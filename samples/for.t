@@ -18,7 +18,7 @@ for (@list) {
 #}
 ##pomp_end
 
-my @machin = 'a' .. 'g';
+my @machin = 'a' .. 'c';
 
 #pomp_for begin
 foreach my $truc (@machin) {
@@ -26,8 +26,10 @@ foreach my $truc (@machin) {
 }
 #pomp_end
 
+my @bar = 'a' .. 'z';
+
 #pomp_for begin
-for (@machin) {
+for (@bar) {
 	print "$_\n";
 }
 #pomp_end

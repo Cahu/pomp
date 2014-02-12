@@ -169,4 +169,30 @@ sub gen_call {
 	return $call;
 }
 
+sub _gen_if {
+	my ($cond_str, $body) = @_;
+
+	return "if ($cond_str) {\n"
+		. POMP::Indent::indent($body)
+		. "}\n";
+}
+
+sub _gen_if_else {
+	my ($cond_str, $body1, $body2) = @_;
+
+	return "if ($cond_str) {\n"
+		. POMP::Indent::indent($body1)
+		. "} else {\n"
+		. POMP::Indent::indent($body2)
+		. "}\n";
+}
+
+sub _gen_while {
+	my ($cond_str, $body) = @_;
+
+	return "while ($cond_str) {\n"
+		. POMP::Indent::indent($body)
+		. "}\n";
+}
+
 1;

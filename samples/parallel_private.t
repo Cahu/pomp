@@ -11,7 +11,7 @@ ok(!defined $truc  );
 ok(! @machin);
 ok(! %chose );
 
-#pomp_parallel private($truc, @machin, %chose) begin
+#pomp_parallel private($truc, @machin, %chose) shared() begin
 {
 	$truc = 10;
 

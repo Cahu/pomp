@@ -82,8 +82,9 @@ directive:
 clauses:
 	                  { {}; }  # empty
 	| clauses clause  {
+		use Data::Dumper;
 	      while (my ($key, $val) = each %{$_[2]}) {
-			  push @{ $_[1]->{$key} }, @$val;
+			  push @{ $_[1]->{$key} }, @$val if ($val);
 		  }
 		  $_[1];
 	  }
@@ -93,22 +94,26 @@ clause:
 	  IF LPAREN VAR RPAREN {
 		  { 'IF' => $_[3] };
 	  }
-	| SHARED LPAREN vars RPAREN {
+	| SHARED LPAREN varlist RPAREN {
 	      { 'SHARED'  => $_[3] };
 	  }
-	| PRIVATE LPAREN vars RPAREN {
+	| PRIVATE LPAREN varlist RPAREN {
 		  { 'PRIVATE' => $_[3] };
 	  }
 	;
 
 declaration:
 	  # empty
-	| PERL_FOREACH { $_[1]; }
+	| PERL_FOREACH
+	;
+
+varlist:
+	  # empty
+	| vars
 	;
 
 vars:
-	  # empty
-	| vars COMMA VAR {
+	  vars COMMA VAR {
 		  push @{ $_[1] }, $_[3];
 		  $_[1];
 	  }

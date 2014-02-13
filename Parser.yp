@@ -17,6 +17,7 @@ our %counts;
 %token IF
 %token SHARED
 %token PRIVATE
+%token FIRSTPRIVATE
 %token COMMA
 %token VAR
 
@@ -56,8 +57,9 @@ job:
 
 		  push @POMP_subs, $sub;
 
-		  $sub->add_shared (@{$clauses_ref->{SHARED} });
-		  $sub->add_private(@{$clauses_ref->{PRIVATE}});
+		  $sub->add_shared      (@{$clauses_ref->{SHARED}      });
+		  $sub->add_private     (@{$clauses_ref->{PRIVATE}     });
+		  $sub->add_firstprivate(@{$clauses_ref->{FIRSTPRIVATE}});
 
 		  if ($directive eq "for") {
 			  $sub->add_foreach(@$declaration);
@@ -99,6 +101,9 @@ clause:
 	  }
 	| PRIVATE LPAREN varlist RPAREN {
 		  { 'PRIVATE' => $_[3] };
+	  }
+	| FIRSTPRIVATE LPAREN varlist RPAREN {
+		  { 'FIRSTPRIVATE' => $_[3] };
 	  }
 	;
 
@@ -203,6 +208,10 @@ sub lex {
 
 		if ($$data =~ s/^private//) {
 			return ('PRIVATE', undef);
+		}
+
+		if ($$data =~ s/^firstprivate//) {
+			return ('FIRSTPRIVATE', undef);
 		}
 
 		if ($$data =~ s/^,//) {

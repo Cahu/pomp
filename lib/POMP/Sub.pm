@@ -9,11 +9,12 @@ use POMP::Indent;
 sub new {
 	my ($class, $sub_name, $code) = @_;
 	return bless {
-		name    => "pomp_" . $sub_name,
-		code    => $code,
-		private => [],
-		shared  => [],
-		foreach => undef,
+		name         => "pomp_" . $sub_name,
+		code         => $code,
+		shared       => [],
+		private      => [],
+		firstprivate => [],
+		foreach      => undef,
 	}, $class;
 }
 
@@ -30,6 +31,12 @@ sub add_private {
 }
 
 
+sub add_firstprivate {
+	my ($self, @firstprivate) = @_;
+	push @{$self->{firstprivate}},  @firstprivate;
+}
+
+
 sub add_foreach {
 	my ($self, $var_name, $list_expr) = @_;
 	$self->{foreach} = {
@@ -43,7 +50,9 @@ sub gen_body {
 	my $self = shift;
 
 	my $private_vars = "";
-	$private_vars   .= "my $_;\n" foreach (@{$self->{private}});
+	my $firstprivate_vars = "";
+	$private_vars      .= "my $_;\n"         foreach (@{$self->{private}     });
+	$firstprivate_vars .= "my $_ = shift;\n" foreach (@{$self->{firstprivate}});
 
 	my $shared_vars = "";
 	foreach my $shared (@{$self->{shared}}) {
@@ -78,7 +87,7 @@ sub gen_body {
 	my $body = "";
 
 	# private and shared local variables
-	$body .= $private_vars . $shared_vars;
+	$body .= $private_vars . $firstprivate_vars . $shared_vars;
 
 	# foreach loops
 	if ($self->{foreach}) {
@@ -147,9 +156,13 @@ sub gen_call {
 		. '__PACKAGE__ . "::' . $self->{name} . '"'
 	;
 
-	# Add clones as argument
 	my $args_str = "";
-	$args_str .= join (", ", @clones);
+
+	# generate arguments for firstprivate and cloned variables
+	$args_str .= join (", ",
+		@{$self->{firstprivate}},
+		@clones,
+	);
 
 	# last argument is the foreach list
 	if ($self->{foreach}) {

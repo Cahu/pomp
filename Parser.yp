@@ -84,7 +84,6 @@ directive:
 clauses:
 	                  { {}; }  # empty
 	| clauses clause  {
-		use Data::Dumper;
 	      while (my ($key, $val) = each %{$_[2]}) {
 			  push @{ $_[1]->{$key} }, @$val if ($val);
 		  }

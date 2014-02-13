@@ -185,14 +185,14 @@ sub lex {
 	## Perl syntax subset
 	if ($began) {
 		# foreach(@list)
-		if ($$data =~ s/
-				^for(?:each)? \s+           # for or foreach
-				(?:my \s+ ($var_re))? \s*   # my $var
-				\(($list_re)\)              # (list)
-				//x
-		) {
-			return ('PERL_FOREACH', [$1, $2]);
-		}
+		#if ($$data =~ s/
+		#		^for(?:each)? \s+           # for or foreach
+		#		(?:my \s+ ($var_re))? \s*   # my $var
+		#		\(($list_re)\)              # (list)
+		#		//x
+		#) {
+		#	return ('PERL_FOREACH', [$1, $2]);
+		#}
 
 		# foreach(list expr)
 		if ($$data =~ s/

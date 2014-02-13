@@ -33,3 +33,16 @@ for (@bar) {
 	print "$_\n";
 }
 #pomp_end
+
+
+#pomp_for begin
+for (1..10) {
+	print "$_\n";
+}
+#pomp_end
+
+#pomp_for begin
+for my $stuff (1..5) {
+	print "$stuff\n";
+}
+#pomp_end

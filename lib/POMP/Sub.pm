@@ -92,7 +92,7 @@ sub gen_body {
 	# foreach loops
 	if ($self->{foreach}) {
 		my $var_name  = $self->{foreach}->{var_name};
-		my $list_expr = $self->{foreach}->{list_expr};
+		my $list_expr = '@pomp_iteration_list';
 
 		# last argument is the foreach list
 		$body .= "my $list_expr = \@_;\n";

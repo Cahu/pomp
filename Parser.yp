@@ -193,6 +193,16 @@ sub lex {
 		) {
 			return ('PERL_FOREACH', [$1, $2]);
 		}
+
+		# foreach(list expr)
+		if ($$data =~ s/
+				^for(?:each)? \s+           # for or foreach
+				(?:my \s+ ($var_re))? \s*   # my $var
+				\(/(/x
+		) {
+			my $list_expr = substr(extract_codeblock($$data, "("), 1, -1);
+			return ('PERL_FOREACH', [$1, $list_expr]);
+		}
 	}
 
 	## CLAUSES

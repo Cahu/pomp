@@ -175,7 +175,7 @@ sub gen_call {
 	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";
 
 	# make the main thread call the same function
-	$call .= '__PACKAGE__ . ::' . $self->{name} . "($args_str);\n";
+	$call .= $self->{name} . "($args_str);\n";
 
 	# Synchronize
 	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';

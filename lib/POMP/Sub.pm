@@ -144,7 +144,7 @@ sub gen_call {
 	# start the enqueue instruction
 	$call .= '$_->enqueue(['
 		. 'POMP::CALL, '
-		. "'POMP_GENERATED::$self->{name}'"
+		. '__PACKAGE__ . "::' . $self->{name} . '"'
 	;
 
 	# Add clones as argument
@@ -162,7 +162,7 @@ sub gen_call {
 	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";
 
 	# make the main thread call the same function
-	$call .= "POMP_GENERATED::$self->{name}($args_str);\n";
+	$call .= '__PACKAGE__ . ::' . $self->{name} . "($args_str);\n";
 
 	# Synchronize
 	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';

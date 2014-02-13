@@ -27,8 +27,6 @@ print <<'EOP';
 
 ### POMP GENERATED SUBS ------------
 
-package POMP_GENERATED;
-
 EOP
 
 foreach my $s (@Parser::POMP_subs) {

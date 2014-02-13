@@ -167,7 +167,7 @@ sub gen_call {
 	# last argument is the foreach list
 	if ($self->{foreach}) {
 		$args_str .= ", " if (length $args_str > 0);
-		$args_str .= "$self->{foreach}->{list_expr}";
+		$args_str .= "($self->{foreach}->{list_expr})";
 	}
 
 	# terminate the enqueue instruction

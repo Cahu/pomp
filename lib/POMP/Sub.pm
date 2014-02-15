@@ -126,7 +126,7 @@ sub gen_call {
 		@clones,
 	);
 
-	# last argument is the foreach list
+	# last argument is the index list to be given to foreach
 	if ($self->{foreach}) {
 		$args_str .= ", " if (length $args_str > 0);
 		$args_str .= "($self->{foreach}->{list_expr})";
@@ -136,13 +136,13 @@ sub gen_call {
 	$call .= ", $args_str" if ($args_str);
 	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";
 
-	# make the main thread call the same function
+	# make the main thread call the same function with the same arguments
 	$call .= $self->{name} . "($args_str);\n";
 
-	# Synchronize
+	# Synchronize all threads
 	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';
 
-	# copy back values
+	# copy back values from shared clones into original vars
 	for my $shared (@{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 		my $clone_name = "\$" . $self->{name} . "_$name";

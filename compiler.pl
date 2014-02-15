@@ -16,7 +16,7 @@ close($file);
 print <<'EOP';
 ### POMP Header ---------------------------------------------
 use POMP;
-use threads::shared;
+use threads::shared;          # for shared vars
 use Storable qw(freeze thaw); # for copying firstprivate vars
 ### ---------------------------------------------------------
 

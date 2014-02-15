@@ -50,9 +50,7 @@ sub gen_body {
 	my $self = shift;
 
 	my $private_vars = "";
-	my $firstprivate_vars = "";
-	$private_vars      .= "my $_;\n"         foreach (@{$self->{private}     });
-	$firstprivate_vars .= "my $_ = shift;\n" foreach (@{$self->{firstprivate}});
+	$private_vars .= "my $_;\n" foreach (@{$self->{private}     });
 
 	my $shared_vars = "";
 	foreach my $shared (@{$self->{shared}}) {
@@ -63,17 +61,17 @@ sub gen_body {
 		my $substitute = $self->{name} . "_" . $barename;
 
 		if ($shared =~ /^@/) {
-			$self->{code} =~ s/\@$barename/\@\{\$$substitute\}/;
-			$self->{code} =~ s/\$$barename\s*\[/\$$substitute->\[/;
+			$self->{code} =~ s/\@$barename/\@\{\$$substitute\}/g;
+			$self->{code} =~ s/\$$barename\s*\[/\$$substitute->\[/g;
 		}
 
 		elsif ($shared =~ /^%/) {
-			$self->{code} =~ s/\%$barename/\%\{\$$substitute\}/;
-			$self->{code} =~ s/\$$barename\s*\{/\$$substitute->\{/;
+			$self->{code} =~ s/\%$barename/\%\{\$$substitute\}/g;
+			$self->{code} =~ s/\$$barename\s*\{/\$$substitute->\{/g;
 		}
 
 		elsif ($shared =~ /^\$/) {
-			$self->{code} =~ s/\$$barename/\$\$$substitute/;
+			$self->{code} =~ s/\$$barename/\$\$$substitute/g;
 		}
 
 		else {
@@ -82,6 +80,34 @@ sub gen_body {
 		}
 
 		$shared_vars .= "my \$$substitute = shift;\n";
+	}
+
+	my $firstprivate_vars = "";
+	foreach my $firstprivate (@{$self->{firstprivate}}) {
+		# Make a local copy with Storable::dclone
+		my ($sigil, $barename) = ($firstprivate =~ /^([\$@%])(.*)/);
+		my $substitute = $self->{name} . "_" . $barename;
+
+		if ($firstprivate =~ /^@/) {
+			$self->{code} =~ s/\@$barename/\@\{\$$substitute\}/g;
+			$self->{code} =~ s/\$$barename\s*\[/\$$substitute->\[/g;
+		}
+
+		elsif ($firstprivate =~ /^%/) {
+			$self->{code} =~ s/\%$barename/\%\{\$$substitute\}/g;
+			$self->{code} =~ s/\$$barename\s*\{/\$$substitute->\{/g;
+		}
+
+		elsif ($firstprivate =~ /^\$/) {
+			$self->{code} =~ s/\$$barename/\$\$$substitute/g;
+		}
+
+		else {
+			warn "Couldn't generate variable for '$firstprivate'";
+			next;
+		}
+
+		$firstprivate_vars .= "my \$$substitute = thaw(shift);\n";
 	}
 
 	my $body = "";
@@ -160,7 +186,9 @@ sub gen_call {
 
 	# generate arguments for firstprivate and cloned variables
 	$args_str .= join (", ",
-		@{$self->{firstprivate}},
+		(map {
+			"freeze(\\$_)"
+		} @{$self->{firstprivate}}), # pass frozen structure
 		@clones,
 	);
 

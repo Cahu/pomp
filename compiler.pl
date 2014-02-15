@@ -14,10 +14,11 @@ close($file);
 
 
 print <<'EOP';
-### POMP Header --------------------
+### POMP Header ---------------------------------------------
 use POMP;
 use threads::shared;
-### --------------------------------
+use Storable qw(freeze thaw); # for copying firstprivate vars
+### ---------------------------------------------------------
 
 EOP
 
@@ -25,7 +26,7 @@ $p->YYParse(YYlex => \&Parser::lex, YYerror => \&Parser::error);
 
 print <<'EOP';
 
-### POMP GENERATED SUBS ------------
+### POMP GENERATED SUBS -------------------------------------
 
 EOP
 
@@ -35,7 +36,7 @@ foreach my $s (@Parser::POMP_subs) {
 }
 
 print <<'EOP';
-### --------------------------------
+### ---------------------------------------------------------
 EOP
 
 

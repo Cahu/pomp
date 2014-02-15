@@ -135,9 +135,9 @@ my $began = 0;
 my $is_parsing = 0;  # set to true when a POMP command has been read. set to
                      # false when a corresponding #pomp_end has been read.
 
-my $var_re    = qr/[\$%@]\w[\w\d]+/;
-my $scalar_re = qr/\$\w[\w\d]+/;
-my $list_re   = qr/@\w[\w\d]+/;
+my $var_re    = qr/[\$%@]\w[\w\d]*/;
+my $scalar_re = qr/\$\w[\w\d]*/;
+my $list_re   = qr/@\w[\w\d]*/;
 my $cond_re   = $var_re; # may be a variable only
 
 sub lex {

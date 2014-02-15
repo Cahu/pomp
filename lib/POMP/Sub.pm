@@ -50,7 +50,7 @@ sub gen_body {
 	my $self = shift;
 
 	my $private_vars = "";
-	$private_vars .= "my $_;\n" foreach (@{$self->{private}     });
+	$private_vars .= "my $_;\n" foreach (@{$self->{private}});
 
 	my $shared_vars = "";
 	foreach my $shared (@{$self->{shared}}) {
@@ -120,9 +120,7 @@ sub gen_call {
 
 	# generate arguments for firstprivate and cloned variables
 	$args_str .= join (", ",
-		(map {
-			"freeze(\\$_)"
-		} @{$self->{firstprivate}}), # pass frozen structure
+		(map { "freeze(\\$_)" } @{$self->{firstprivate}}), # pass frozen structure
 		@clones,
 	);
 

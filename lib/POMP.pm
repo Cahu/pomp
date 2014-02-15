@@ -40,6 +40,35 @@ sub POMP_CONSUMER {
 	}
 }
 
+sub GET_TID {
+	return threads->tid();
+}
+
+sub GET_SHARE {
+	my @list = @_;
+
+	my $start;
+	my $end;
+
+	my $tid = GET_TID();
+
+	if ($tid >= @list) {
+		return ();
+	}
+
+	if ($POMP_NUM_THREADS >= @list) {
+		$start = $tid;
+		$end = $tid;
+	}
+
+	else {
+		$start = int ((  $tid) * @list / $POMP_NUM_THREADS    );
+		$end   = int ((1+$tid) * @list / $POMP_NUM_THREADS - 1);
+	}
+
+	return @list[$start .. $end];
+}
+
 
 INIT {
 	# Create queues and spawn threads

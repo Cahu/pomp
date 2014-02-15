@@ -3,7 +3,7 @@ use warnings;
 
 
 my @truc;
-my @list = 1..10;
+my @list = 1..2;
 #pomp_for shared(@truc) begin
 for (@list) {
 	$truc[1] = 10;

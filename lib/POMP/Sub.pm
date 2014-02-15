@@ -78,34 +78,10 @@ sub gen_body {
 		my $var_name  = $self->{foreach}->{var_name};
 		my $list_expr = '@pomp_iteration_list';
 
-		# last argument is the foreach list
-		$body .= "my $list_expr = \@_;\n";
-
-		my $start_var = "\$POMP_FOREACH_START";
-		my $end_var   = "\$POMP_FOREACH_END";
-
-		# strategy = distribute the same amount of indices to each thread
-		$body .= "return if (threads->tid()+1 > $list_expr);\n";
-		$body .= "my $start_var;\n";
-		$body .= "my $end_var;\n";
-		$body .= _gen_if_else(
-			"\$POMP::POMP_NUM_THREADS >= $list_expr",
-
-			  "$start_var = threads->tid();\n"
-			. "$end_var   = threads->tid();\n",
-
-			  "$start_var = int("
-			. "threads->tid()*$list_expr" . "/" . "\$POMP::POMP_NUM_THREADS"
-			. ");\n"
-			. "$end_var   = int("
-			. "(1+threads->tid())*$list_expr" . "/" . "\$POMP::POMP_NUM_THREADS-1"
-			. ");\n"
-		);
-
-		# for my $var (@list) { ... }
+		# remaining arguments are to be given to the foreach
 		$body .= _gen_for(
 			$var_name,
-			"$list_expr\[$start_var .. $end_var\]",
+			'POMP::GET_SHARE(@_)',
 			$self->{code}
 		);
 	}

@@ -35,13 +35,35 @@ for my $i (0 .. 3) {
 }
 #pomp_end
 
+is_deeply(\@A_square, \@answer);
+
+
+@A_square = (
+	[0, 0, 0, 0],
+	[0, 0, 0, 0],
+	[0, 0, 0, 0],
+	[0, 0, 0, 0],
+);
+
 for my $i (0 .. 3) {
+	#pomp_for shared(@A_square) firstprivate(@A, $i) begin
 	for my $j (0 .. 3) {
-		print "\t$A_square[$i][$j]";
+		for my $k (0 .. 3) {
+			$A_square[$i][$j] += $A[$i][$k] * $A[$k][$j];
+		}
 	}
-	print "\n";
+	#pomp_end
 }
 
 is_deeply(\@A_square, \@answer);
+
+
+#for my $i (0 .. 3) {
+#	for my $j (0 .. 3) {
+#		print "\t$A_square[$i][$j]";
+#	}
+#	print "\n";
+#}
+
 
 done_testing();

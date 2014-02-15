@@ -57,56 +57,14 @@ sub gen_body {
 		# Shared variables are passed by reference (result of shared_clone from
 		# threads::shared). We must substitute all occurences of these variables
 		# with the corresponding dereference instruction.
-		my ($barename) = ($shared =~ /^[\$@%](.*)/);
-		my $substitute = $self->{name} . "_" . $barename;
-
-		if ($shared =~ /^@/) {
-			$self->{code} =~ s/\@$barename/\@\{\$$substitute\}/g;
-			$self->{code} =~ s/\$$barename\s*\[/\$$substitute->\[/g;
-		}
-
-		elsif ($shared =~ /^%/) {
-			$self->{code} =~ s/\%$barename/\%\{\$$substitute\}/g;
-			$self->{code} =~ s/\$$barename\s*\{/\$$substitute->\{/g;
-		}
-
-		elsif ($shared =~ /^\$/) {
-			$self->{code} =~ s/\$$barename/\$\$$substitute/g;
-		}
-
-		else {
-			warn "Couldn't generate variable for '$shared'";
-			next;
-		}
-
+		my $substitute = _substitute_with_refs($shared, \($self->{code}));
 		$shared_vars .= "my \$$substitute = shift;\n";
 	}
 
 	my $firstprivate_vars = "";
 	foreach my $firstprivate (@{$self->{firstprivate}}) {
-		# Make a local copy with Storable::dclone
-		my ($sigil, $barename) = ($firstprivate =~ /^([\$@%])(.*)/);
-		my $substitute = $self->{name} . "_" . $barename;
-
-		if ($firstprivate =~ /^@/) {
-			$self->{code} =~ s/\@$barename/\@\{\$$substitute\}/g;
-			$self->{code} =~ s/\$$barename\s*\[/\$$substitute->\[/g;
-		}
-
-		elsif ($firstprivate =~ /^%/) {
-			$self->{code} =~ s/\%$barename/\%\{\$$substitute\}/g;
-			$self->{code} =~ s/\$$barename\s*\{/\$$substitute->\{/g;
-		}
-
-		elsif ($firstprivate =~ /^\$/) {
-			$self->{code} =~ s/\$$barename/\$\$$substitute/g;
-		}
-
-		else {
-			warn "Couldn't generate variable for '$firstprivate'";
-			next;
-		}
-
+		# Make a local copy with Storable::thaw
+		my $substitute = _substitute_with_refs($firstprivate, \($self->{code}));
 		$firstprivate_vars .= "my \$$substitute = thaw(shift);\n";
 	}
 
@@ -250,6 +208,32 @@ sub _gen_while {
 	return "while ($cond_str) {\n"
 		. POMP::Indent::indent($body)
 		. "}\n";
+}
+
+sub _substitute_with_refs {
+	my ($var, $code_ref) = @_;
+
+	my ($sigil, $barename) = ($var =~ /^([\$@%])(.*)/);
+	my $substitute;
+
+	if ($sigil eq '@') {
+		$substitute = "pomp_array_" . $barename;
+		$$code_ref =~ s/\@$barename/\@\{\$$substitute\}/g;
+		$$code_ref =~ s/\$$barename\s*\[/\$$substitute->\[/g;
+	}
+
+	elsif ($sigil eq '%') {
+		$substitute = "pomp_hash_" . $barename;
+		$$code_ref =~ s/\%$barename/\%\{\$$substitute\}/g;
+		$$code_ref =~ s/\$$barename\s*\{/\$$substitute->\{/g;
+	}
+
+	elsif ($sigil eq '$') {
+		$substitute = "pomp_scalar_" . $barename;
+		$$code_ref =~ s/\$$barename/\$\$$substitute/g;
+	}
+
+	return $substitute;
 }
 
 1;

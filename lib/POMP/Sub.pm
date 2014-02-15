@@ -92,6 +92,7 @@ sub gen_body {
 
 	return "sub " . $self->{name} . " {\n"
 		. POMP::Indent::indent($body)
+		. POMP::Indent::indent("POMP::BARRIER();\n") # synchronize threads
 		. "}\n";
 }
 
@@ -137,14 +138,11 @@ sub gen_call {
 	# make the main thread call the same function with the same arguments
 	$call .= $self->{name} . "($args_str);\n";
 
-	# Synchronize all threads
-	$call .= '$_->dequeue for (@POMP::POMP_OUT_QUEUES);';
-
 	# copy back values from shared clones into original vars
 	for my $shared (@{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 		my $clone_name = "\$" . $self->{name} . "_$name";
-		$call .= "\n$shared = $sigil\{$clone_name\};";
+		$call .= "$shared = $sigil\{$clone_name\};";
 	}
 
 	return $call;

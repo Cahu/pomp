@@ -2,14 +2,16 @@ package POMP;
 
 use strict;
 use threads;
+use threads::shared;
 use Thread::Queue;
 
 our $VERSION = 0.1;
 
 our @POMP_THREADS;
 our @POMP_IN_QUEUES;
-our @POMP_OUT_QUEUES;
 our $POMP_NUM_THREADS = 4;
+
+my $barrier :shared = 0;
 
 use constant {
 	CALL => 1,    # call a sub with given parameters
@@ -20,7 +22,7 @@ use constant {
 # consumer function
 sub POMP_CONSUMER {
 	my $self = threads->self();
-	my ($in_queue, $out_queue) = @_;
+	my ($in_queue) = @_;
 
 	while (my $instr = $in_queue->dequeue()) {
 		my ($code, $sub, @sub_args) = @$instr;
@@ -35,8 +37,6 @@ sub POMP_CONSUMER {
 		elsif ($code == EXIT) {
 			last;
 		}
-
-		$out_queue->enqueue(1); # Signal done
 	}
 }
 
@@ -70,15 +70,26 @@ sub GET_SHARE {
 }
 
 
+sub BARRIER {
+	lock($barrier);
+	$barrier++;
+
+	if ($barrier == $POMP_NUM_THREADS) {
+		$barrier = 0;
+		cond_broadcast($barrier);
+	} else {
+		cond_wait($barrier);
+	}
+}
+
+
 INIT {
 	# Create queues and spawn threads
 	@POMP_IN_QUEUES  = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS-1);
-	@POMP_OUT_QUEUES = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS-1);
 	@POMP_THREADS = map {
 		threads->create(
 			\&POMP_CONSUMER,
 			$POMP_IN_QUEUES[$_],
-			$POMP_OUT_QUEUES[$_],
 		);
 	} (0..$POMP_NUM_THREADS-2);
 }

@@ -9,6 +9,7 @@ lib/POMP/Sub.pm
 lib/POMP/Indent.pm
 lib/POMP/Clause.pm
 lib/POMP/Reduction.pm
+run_tests.sh
 samples/for.t
 samples/parallel_print.t
 samples/parallel_private.t

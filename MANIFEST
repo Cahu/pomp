@@ -8,7 +8,12 @@ lib/POMP.pm
 lib/POMP/Sub.pm
 lib/POMP/Indent.pm
 lib/POMP/Clause.pm
+lib/POMP/Reduction.pm
 samples/for.t
 samples/parallel_print.t
 samples/parallel_private.t
 samples/parallel_shared.t
+samples/matrix_product.t
+samples/reduction.t
+samples/firstprivate.t
+samples/parallel_within_sub.t

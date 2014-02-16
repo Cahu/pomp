@@ -1,16 +1,21 @@
 use strict;
 use warnings;
 
+$" = ", ";
 
-my @truc;
-my @list = 1..2;
-#pomp_for shared(@truc) begin
-for (@list) {
-	$truc[1] = 10;
-	print $_ . "\n"
-	;
+print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
+
+{
+	my @list = 1..2;
+
+	print "* test: print the (@list) list in parallel\n";
+
+	#pomp_for begin
+	for (@list) {
+		print "$_\n";
+	}
+	#pomp_end
 }
-#pomp_end
 
 ##pomp_for begin
 #{
@@ -18,31 +23,26 @@ for (@list) {
 #}
 ##pomp_end
 
-my @machin = 'a' .. 'c';
+{
+	my @machin = 'a' .. 'c';
 
-#pomp_for begin
-foreach my $truc (@machin) {
-	print "$truc\n";
+	print "* test: print the (@machin) list in parallel using a 'my' variable\n";
+
+	#pomp_for begin
+	foreach my $truc (@machin) {
+		print "$truc\n";
+	}
+	#pomp_end
 }
-#pomp_end
 
-my @bar = 'a' .. 'z';
+{
+	my @bar = 'a' .. 'g';
 
-#pomp_for begin
-for (@bar) {
-	print "$_\n";
+	print "* test: print the (@bar) list in parallel\n";
+
+	#pomp_for begin
+	for (@bar) {
+		print "$_\n";
+	}
+	#pomp_end
 }
-#pomp_end
-
-
-#pomp_for begin
-for (1..10) {
-	print "$_\n";
-}
-#pomp_end
-
-#pomp_for begin
-for my $stuff (1..5) {
-	print "$stuff\n";
-}
-#pomp_end

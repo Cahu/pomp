@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 6;
+use Test::More;
 
 my $truc;
 my @machin;
@@ -38,3 +38,5 @@ is_deeply(
 	  7 => "bidule",
 	}
 );
+
+done_testing();

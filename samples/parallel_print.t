@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
+print "* test: all threads print the same thing\n";
 
 #pomp_parallel begin
 {
@@ -8,25 +10,3 @@ use warnings;
 }
 #pomp_end
 
-print "============\n";
-
-within_sub();
-
-sub within_sub {
-	my $arg = shift;
-	my (@arglist) = @_;
-
-	#pomp_for begin
-	for (1..10) {
-		print "$_\n";
-	}
-	#pomp_end
-
-	print "============\n";
-
-	#pomp_for begin
-	for (1..2) {
-		print "$_\n";
-	}
-	#pomp_end
-}

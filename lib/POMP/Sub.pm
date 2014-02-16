@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use POMP::Indent;
+use POMP::Reduction;
 
 
 sub new {
@@ -14,7 +15,7 @@ sub new {
 		shared       => [],
 		private      => [],
 		firstprivate => [],
-		reduction    => [],
+		reduction    => {},
 		foreach      => undef,
 	}, $class;
 }
@@ -40,21 +41,10 @@ sub add_firstprivate {
 
 sub add_reduction {
 	my $self = shift;
-	my ($op, @varlist) = @_;
+	my ($op, $var_expr) = @_;
 
-	# add var, the initial value and the oprator to the reduction array
-
-	if ($op eq "+") {
-		push @{$self->{reduction}}, map { [$_, 0, $op] } @varlist;
-	}
-
-	elsif ($op eq "-") {
-		push @{$self->{reduction}}, map { [$_, 0, $op] } @varlist;
-	}
-
-	elsif ($op eq "*") {
-		push @{$self->{reduction}}, map { [$_, 1, $op] } @varlist;
-	}
+	# add var, the initial value and the oprator to the reduction hash
+	$self->{reduction}->{$var_expr} = $op;
 }
 
 
@@ -83,9 +73,10 @@ sub gen_body {
 	}
 
 	my $reduction_vars = "";
-	foreach my $reduc (@{$self->{reduction}}) {
+	while (my ($var_name, $op) = each %{$self->{reduction}}) {
+		my $initial_value = POMP::Reduction::init_for($op);
 		# create local version of the reduced vars and init with initial value
-		$reduction_vars .= "my $reduc->[0] = $reduc->[1];\n";
+		$reduction_vars .= "my $var_name = $initial_value;\n";
 	}
 
 	my $firstprivate_vars = "";
@@ -117,7 +108,7 @@ sub gen_body {
 		$body .= $self->{code};
 	}
 
-	$body .= "POMP::ENQUEUE(freeze(\\$_->[0]));\n" for (@{$self->{reduction}});
+	$body .= "POMP::ENQUEUE(freeze(\\$_));\n" for (keys %{$self->{reduction}});
 
 	$body .= "POMP::BARRIER();\n"; # synchronize threads
 
@@ -180,10 +171,8 @@ sub gen_call {
 	}
 
 	# handle reductions
-	foreach my $reduc (@{$self->{reduction}}) {
-		my $op  = $reduc->[2];
-		my $var = $reduc->[0];
-		$call .= "$var = $var $op \${thaw(\$_->dequeue)} for(\@POMP::POMP_OUT_QUEUES);\n";
+	while (my ($var_name, $op) = each %{$self->{reduction}}) {
+		$call .= "$var_name $op= \${thaw(\$_->dequeue)} for(\@POMP::POMP_OUT_QUEUES);\n";
 	}
 
 	return $call;

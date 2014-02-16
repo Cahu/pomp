@@ -59,12 +59,12 @@ job:
 
 		  push @POMP_subs, $sub;
 
-		  $sub->add_shared      (@{$clauses_ref->{SHARED}           });
-		  $sub->add_private     (@{$clauses_ref->{PRIVATE}          });
-		  $sub->add_firstprivate(@{$clauses_ref->{FIRSTPRIVATE}     });
-		  $sub->add_reduction   ("+", @{$clauses_ref->{'REDUCTION+'}});
-		  $sub->add_reduction   ("-", @{$clauses_ref->{'REDUCTION-'}});
-		  $sub->add_reduction   ("*", @{$clauses_ref->{'REDUCTION*'}});
+		  $sub->add_shared      (@{$clauses_ref->{SHARED}      });
+		  $sub->add_private     (@{$clauses_ref->{PRIVATE}     });
+		  $sub->add_firstprivate(@{$clauses_ref->{FIRSTPRIVATE}});
+		  $sub->add_reduction   ("+", $_) for (@{$clauses_ref->{'REDUCTION+'}});
+		  $sub->add_reduction   ("-", $_) for (@{$clauses_ref->{'REDUCTION-'}});
+		  $sub->add_reduction   ("*", $_) for (@{$clauses_ref->{'REDUCTION*'}});
 
 		  if ($directive eq "for") {
 			  $sub->add_foreach(@$declaration);

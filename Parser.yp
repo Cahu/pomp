@@ -17,7 +17,9 @@ our %counts;
 %token IF
 %token SHARED
 %token PRIVATE
+%token REDUCTION
 %token FIRSTPRIVATE
+%token COLON
 %token COMMA
 %token VAR
 
@@ -57,9 +59,12 @@ job:
 
 		  push @POMP_subs, $sub;
 
-		  $sub->add_shared      (@{$clauses_ref->{SHARED}      });
-		  $sub->add_private     (@{$clauses_ref->{PRIVATE}     });
-		  $sub->add_firstprivate(@{$clauses_ref->{FIRSTPRIVATE}});
+		  $sub->add_shared      (@{$clauses_ref->{SHARED}           });
+		  $sub->add_private     (@{$clauses_ref->{PRIVATE}          });
+		  $sub->add_firstprivate(@{$clauses_ref->{FIRSTPRIVATE}     });
+		  $sub->add_reduction   ("+", @{$clauses_ref->{'REDUCTION+'}});
+		  $sub->add_reduction   ("-", @{$clauses_ref->{'REDUCTION-'}});
+		  $sub->add_reduction   ("*", @{$clauses_ref->{'REDUCTION*'}});
 
 		  if ($directive eq "for") {
 			  $sub->add_foreach(@$declaration);
@@ -93,16 +98,20 @@ clauses:
 
 clause:
 	  IF LPAREN VAR RPAREN {
-		  { 'IF' => $_[3] };
+		  return { 'IF' => $_[3] };
 	  }
 	| SHARED LPAREN varlist RPAREN {
-	      { 'SHARED'  => $_[3] };
+	      return { 'SHARED'  => $_[3] };
 	  }
 	| PRIVATE LPAREN varlist RPAREN {
-		  { 'PRIVATE' => $_[3] };
+		  return { 'PRIVATE' => $_[3] };
 	  }
 	| FIRSTPRIVATE LPAREN varlist RPAREN {
-		  { 'FIRSTPRIVATE' => $_[3] };
+		  return { 'FIRSTPRIVATE' => $_[3] };
+	  }
+	| REDUCTION LPAREN operator COLON varlist RPAREN {
+		  my $key = "REDUCTION" . $_[3];
+		  return { $key => $_[5] };
 	  }
 	;
 
@@ -124,6 +133,13 @@ vars:
 	| VAR {
 		  [ $_[1] ];
 	  }
+	;
+
+operator:
+	  PLUS  { '+'; }
+	| MINUS { '-'; }
+	| MULT  { '*'; }
+	# more to come
 	;
 
 %%
@@ -223,8 +239,16 @@ sub lex {
 			return ('FIRSTPRIVATE', undef);
 		}
 
+		if ($$data =~ s/^reduction//) {
+			return ('REDUCTION', undef);
+		}
+
 		if ($$data =~ s/^,//) {
 			return ('COMMA', undef);
+		}
+
+		if ($$data =~ s/^://) {
+			return ('COLON', undef);
 		}
 
 		if ($$data =~ s/^\(//) {
@@ -233,6 +257,18 @@ sub lex {
 
 		if ($$data =~ s/^\)//) {
 			return ('RPAREN', undef);
+		}
+
+		if ($$data =~ s/^\+//) {
+			return ('PLUS', undef);
+		}
+
+		if ($$data =~ s/^\-//) {
+			return ('MINUS', undef);
+		}
+
+		if ($$data =~ s/^\*//) {
+			return ('MULT', undef);
 		}
 
 		if ($$data =~ s/^($var_re)//) {

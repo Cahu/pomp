@@ -14,6 +14,7 @@ sub new {
 		shared       => [],
 		private      => [],
 		firstprivate => [],
+		reduction    => [],
 		foreach      => undef,
 	}, $class;
 }
@@ -34,6 +35,26 @@ sub add_private {
 sub add_firstprivate {
 	my ($self, @firstprivate) = @_;
 	push @{$self->{firstprivate}},  @firstprivate;
+}
+
+
+sub add_reduction {
+	my $self = shift;
+	my ($op, @varlist) = @_;
+
+	# add var, the initial value and the oprator to the reduction array
+
+	if ($op eq "+") {
+		push @{$self->{reduction}}, map { [$_, 0, $op] } @varlist;
+	}
+
+	elsif ($op eq "-") {
+		push @{$self->{reduction}}, map { [$_, 0, $op] } @varlist;
+	}
+
+	elsif ($op eq "*") {
+		push @{$self->{reduction}}, map { [$_, 1, $op] } @varlist;
+	}
 }
 
 
@@ -61,6 +82,12 @@ sub gen_body {
 		$shared_vars .= "my \$$substitute = shift;\n";
 	}
 
+	my $reduction_vars = "";
+	foreach my $reduc (@{$self->{reduction}}) {
+		# create local version of the reduced vars and init with initial value
+		$reduction_vars .= "my $reduc->[0] = $reduc->[1];\n";
+	}
+
 	my $firstprivate_vars = "";
 	foreach my $firstprivate (@{$self->{firstprivate}}) {
 		# Make a local copy with Storable::thaw
@@ -71,7 +98,7 @@ sub gen_body {
 	my $body = "";
 
 	# private and shared local variables
-	$body .= $private_vars . $firstprivate_vars . $shared_vars;
+	$body .= $private_vars . $reduction_vars . $firstprivate_vars . $shared_vars;
 
 	# foreach loops
 	if ($self->{foreach}) {
@@ -90,9 +117,12 @@ sub gen_body {
 		$body .= $self->{code};
 	}
 
+	$body .= "POMP::ENQUEUE(freeze(\\$_->[0]));\n" for (@{$self->{reduction}});
+
+	$body .= "POMP::BARRIER();\n"; # synchronize threads
+
 	return "sub " . $self->{name} . " {\n"
 		. POMP::Indent::indent($body)
-		. POMP::Indent::indent("POMP::BARRIER();\n") # synchronize threads
 		. "}\n";
 }
 
@@ -143,6 +173,13 @@ sub gen_call {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 		my $clone_name = "\$" . $self->{name} . "_$name";
 		$call .= "$shared = $sigil\{$clone_name\};";
+	}
+
+	# handle reductions
+	foreach my $reduc (@{$self->{reduction}}) {
+		my $op  = $reduc->[2];
+		my $var = $reduc->[0];
+		$call .= "$var = $var $op \${thaw(\$_->dequeue)} for(\@POMP::POMP_OUT_QUEUES);\n";
 	}
 
 	return $call;

@@ -9,6 +9,7 @@ our $VERSION = 0.1;
 
 our @POMP_THREADS;
 our @POMP_IN_QUEUES;
+our @POMP_OUT_QUEUES;
 our $POMP_NUM_THREADS = 4;
 
 my $barrier :shared = 0;
@@ -42,6 +43,12 @@ sub POMP_CONSUMER {
 
 sub GET_TID {
 	return threads->tid();
+}
+
+sub ENQUEUE {
+	my ($serialized) = @_;
+	my $queue = $POMP_OUT_QUEUES[GET_TID()];
+	$queue->enqueue($serialized);
 }
 
 sub GET_SHARE {
@@ -86,6 +93,7 @@ sub BARRIER {
 INIT {
 	# Create queues and spawn threads
 	@POMP_IN_QUEUES  = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS-1);
+	@POMP_OUT_QUEUES = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS  );
 	@POMP_THREADS = map {
 		threads->create(
 			\&POMP_CONSUMER,

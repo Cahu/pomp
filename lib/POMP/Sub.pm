@@ -12,9 +12,9 @@ sub new {
 	return bless {
 		name         => "pomp_" . $sub_name,
 		code         => $code,
-		shared       => [],
-		private      => [],
-		firstprivate => [],
+		shared       => {},
+		private      => {},
+		firstprivate => {},
 		reduction    => {},
 		foreach      => undef,
 	}, $class;
@@ -23,19 +23,12 @@ sub new {
 
 sub add_shared {
 	my ($self, @shared) = @_;
-	push @{$self->{shared}},  @shared;
-}
-
-
-sub add_private {
-	my ($self, @private) = @_;
-	push @{$self->{private}},  @private;
-}
-
-
-sub add_firstprivate {
-	my ($self, @firstprivate) = @_;
-	push @{$self->{firstprivate}},  @firstprivate;
+	for (@shared) {
+		$self->{shared}->{$_} = 1;
+		delete $self->{private     }->{$_};
+		delete $self->{reduction   }->{$_};
+		delete $self->{firstprivate}->{$_};
+	}
 }
 
 
@@ -44,8 +37,38 @@ sub add_reduction {
 	my ($op, $var_expr) = @_;
 
 	# add var, the initial value and the oprator to the reduction hash
-	$self->{reduction}->{$var_expr} = $op;
+	unless (exists $self->{shared}->{$_}) {
+		$self->{reduction}->{$var_expr} = $op;
+		delete $self->{private     }->{$_};
+		delete $self->{firstprivate}->{$_};
+	}
 }
+
+
+sub add_firstprivate {
+	my ($self, @firstprivate) = @_;
+	for (@firstprivate) {
+		unless (exists $self->{shared}->{$_} || exists $self->{reduction}->{$_}) {
+			$self->{firstprivate}->{$_} = 1;
+			delete $self->{private}->{$_};
+		}
+	}
+}
+
+
+sub add_private {
+	my ($self, @private) = @_;
+	for (@private) {
+		unless (
+			   exists $self->{shared}->{$_}
+			|| exists $self->{reduction}->{$_}
+			|| exists $self->{firstprivate}->{$_}
+		) {
+			$self->{private}->{$_} = 1;
+		}
+	}
+}
+
 
 
 sub add_foreach {
@@ -61,10 +84,10 @@ sub gen_body {
 	my $self = shift;
 
 	my $private_vars = "";
-	$private_vars .= "my $_;\n" foreach (@{$self->{private}});
+	$private_vars .= "my $_;\n" foreach (keys %{$self->{private}});
 
 	my $shared_vars = "";
-	foreach my $shared (@{$self->{shared}}) {
+	foreach my $shared (keys %{$self->{shared}}) {
 		# Shared variables are passed by reference (result of shared_clone from
 		# threads::shared). We must substitute all occurences of these variables
 		# with the corresponding dereference instruction.
@@ -80,7 +103,7 @@ sub gen_body {
 	}
 
 	my $firstprivate_vars = "";
-	foreach my $firstprivate (@{$self->{firstprivate}}) {
+	foreach my $firstprivate (keys %{$self->{firstprivate}}) {
 		# Make a local copy with Storable::thaw
 		my $substitute = _substitute_with_refs($firstprivate, \($self->{code}));
 		$firstprivate_vars .= "my \$$substitute = thaw(shift);\n";
@@ -93,8 +116,7 @@ sub gen_body {
 
 	# foreach loops
 	if ($self->{foreach}) {
-		my $var_name  = $self->{foreach}->{var_name};
-		my $list_expr = '@pomp_iteration_list';
+		my $var_name = $self->{foreach}->{var_name};
 
 		# remaining arguments are to be given to the foreach
 		$body .= _gen_for(
@@ -125,7 +147,7 @@ sub gen_call {
 	my $call = "";
 
 	# generate shared clones
-	for my $shared (@{$self->{shared}}) {
+	for my $shared (keys %{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 		my $clone_name = "\$" . $self->{name} . "_$name";
 		$call .= "my $clone_name = shared_clone(\\$shared);\n";
@@ -145,7 +167,7 @@ sub gen_call {
 	# be used to reconstitute the data structure localy with thaw() by each
 	# thread.
 	$args_str .= join (", ",
-		(map { "freeze(\\$_)" } @{$self->{firstprivate}}),
+		(map { "freeze(\\$_)" } keys %{$self->{firstprivate}}),
 		@clones,
 	);
 
@@ -164,7 +186,7 @@ sub gen_call {
 	$call .= $self->{name} . "($args_str);\n";
 
 	# copy back values from shared clones into original vars
-	for my $shared (@{$self->{shared}}) {
+	for my $shared (keys %{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 		my $clone_name = "\$" . $self->{name} . "_$name";
 		$call .= "$shared = $sigil\{$clone_name\};";

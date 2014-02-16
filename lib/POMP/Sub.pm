@@ -149,13 +149,17 @@ sub gen_call {
 
 	my $args_str = "";
 
-	# generate arguments for firstprivate and cloned variables
+	# generate arguments for firstprivate and cloned variables.
+	# pass frozen versions of these variables to perform a deep copy which will
+	# be used to reconstitute the data structure localy with thaw() by each
+	# thread.
 	$args_str .= join (", ",
-		(map { "freeze(\\$_)" } @{$self->{firstprivate}}), # pass frozen structure
+		(map { "freeze(\\$_)" } @{$self->{firstprivate}}),
 		@clones,
 	);
 
-	# last argument is the index list to be given to foreach
+	# last argument is the index list to be given to foreach.
+	# force list context by adding parenthesis.
 	if ($self->{foreach}) {
 		$args_str .= ", " if (length $args_str > 0);
 		$args_str .= "($self->{foreach}->{list_expr})";

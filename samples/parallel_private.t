@@ -1,15 +1,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 6;
+use Test::More;
 
-my $truc;
-my @machin;
-my %chose;
+my $truc = 20;
+my @machin = ('a' .. 'z');
+my %chose = ( toto => 'tutu' );
 
-ok(!defined $truc  );
-ok(! @machin);
-ok(! %chose );
 
 #pomp_parallel private($truc, @machin, %chose) shared() begin
 {
@@ -23,6 +20,8 @@ ok(! %chose );
 }
 #pomp_end
 
-ok(!defined $truc  );
-ok(! @machin);
-ok(! %chose );
+ok($truc == 20, "scalar not modified");
+is_deeply(\@machin, ['a' .. 'z'], "list still the same");
+is_deeply(\%chose, { toto => 'tutu' }, "hash still the same");
+
+done_testing();

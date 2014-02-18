@@ -11,7 +11,7 @@ for (1 .. 100) {
 }
 #pomp_end
 
-cmp_ok($var, "==", 105);
+cmp_ok($var, "==", 105, "'+' operator reduction");
 
 #pomp_for reduction(+:$var) begin
 for (1 .. 105) {
@@ -19,7 +19,7 @@ for (1 .. 105) {
 }
 #pomp_end
 
-cmp_ok($var, "==", 0);
+cmp_ok($var, "==", 0, "'-' operator reduction");
 
 
 my $pow = 1;
@@ -30,7 +30,7 @@ for (1 .. 6) {
 }
 #pomp_end
 
-cmp_ok($pow, "==", 64); # 2^6
+cmp_ok($pow, "==", 64, "'*' operator reduction"); # 2^6
 
 
 my @list = ();
@@ -41,6 +41,6 @@ for ('a' .. 'z') {
 }
 #pomp_end
 
-is_deeply([sort @list], ['a' .. 'z']);
+is_deeply([sort @list], ['a' .. 'z'], "push reduction");
 
 done_testing();

@@ -34,11 +34,11 @@ sub add_shared {
 
 sub add_reduction {
 	my $self = shift;
-	my ($op, $var_expr) = @_;
+	my ($var_expr, $reduction) = @_;
 
 	# add var, the initial value and the oprator to the reduction hash
 	unless (exists $self->{shared}->{$_}) {
-		$self->{reduction}->{$var_expr} = $op;
+		$self->{reduction}->{$var_expr} = $reduction;
 		delete $self->{private     }->{$_};
 		delete $self->{firstprivate}->{$_};
 	}
@@ -96,8 +96,8 @@ sub gen_body {
 	}
 
 	my $reduction_vars = "";
-	while (my ($var_name, $op) = each %{$self->{reduction}}) {
-		my $initial_value = POMP::Reduction::init_for($op);
+	while (my ($var_name, $reduction) = each %{$self->{reduction}}) {
+		my $initial_value = $reduction->init;
 		# create local version of the reduced vars and init with initial value
 		$reduction_vars .= "my $var_name = $initial_value;\n";
 	}
@@ -193,8 +193,11 @@ sub gen_call {
 	}
 
 	# handle reductions
-	while (my ($var_name, $op) = each %{$self->{reduction}}) {
-		$call .= "$var_name $op= \${thaw(\$_->dequeue)} for(\@POMP::POMP_OUT_QUEUES);\n";
+	while (my ($var_name, $reduction) = each %{$self->{reduction}}) {
+		$call .= $reduction->apply(
+			$var_name,
+			'map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES'
+		);
 	}
 
 	return $call;

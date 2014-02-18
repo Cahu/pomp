@@ -6,9 +6,42 @@ use warnings;
 use POMP::Sub;
 use POMP::Indent;
 use POMP::Clause;
+use POMP::Reduction;
 
 our @POMP_subs;
+our %POMP_reductions;
 our %counts;
+
+
+# Default reduction operators
+$POMP_reductions{'+'} = POMP::Reduction->new(
+	0, sub {
+		my ($accumulator, $refs_list) = @_;
+		return "$accumulator += \$\$_ for ($refs_list);";
+	}
+);
+
+$POMP_reductions{'-'} = POMP::Reduction->new(
+	0, sub {
+		my ($accumulator, $refs_list) = @_;
+		return "$accumulator -= \$\$_ for ($refs_list);";
+	}
+);
+
+$POMP_reductions{'*'} = POMP::Reduction->new(
+	1, sub {
+		my ($accumulator, $refs_list) = @_;
+		return "$accumulator *= \$\$_ for ($refs_list);";
+	}
+);
+
+$POMP_reductions{'push'} = POMP::Reduction->new(
+	'()', sub {
+		my ($accumulator, $refs_list) = @_;
+		return "push $accumulator, map { \@\$_ } $refs_list;";
+	}
+);
+
 %}
 
 %token FOR
@@ -62,9 +95,15 @@ job:
 		  $sub->add_shared      (@{$clauses_ref->{SHARED}      });
 		  $sub->add_private     (@{$clauses_ref->{PRIVATE}     });
 		  $sub->add_firstprivate(@{$clauses_ref->{FIRSTPRIVATE}});
-		  $sub->add_reduction   ("+", $_) for (@{$clauses_ref->{'REDUCTION+'}});
-		  $sub->add_reduction   ("-", $_) for (@{$clauses_ref->{'REDUCTION-'}});
-		  $sub->add_reduction   ("*", $_) for (@{$clauses_ref->{'REDUCTION*'}});
+
+		  $sub->add_reduction($_, $POMP_reductions{'+'})
+				for (@{$clauses_ref->{'REDUCTION+'}});
+		  $sub->add_reduction($_, $POMP_reductions{'-'})
+				for (@{$clauses_ref->{'REDUCTION-'}});
+		  $sub->add_reduction($_, $POMP_reductions{'*'})
+				for (@{$clauses_ref->{'REDUCTION*'}});
+		  $sub->add_reduction($_, $POMP_reductions{'push'})
+				for (@{$clauses_ref->{'REDUCTIONpush'}});
 
 		  if ($directive eq "for") {
 			  $sub->add_foreach(@$declaration);
@@ -136,9 +175,10 @@ vars:
 	;
 
 operator:
-	  PLUS  { '+'; }
-	| MINUS { '-'; }
-	| MULT  { '*'; }
+	  PLUS  { '+';    }
+	| MINUS { '-';    }
+	| MULT  { '*';    }
+	| PUSH  { 'push'; }
 	# more to come
 	;
 
@@ -269,6 +309,10 @@ sub lex {
 
 		if ($$data =~ s/^\*//) {
 			return ('MULT', undef);
+		}
+
+		if ($$data =~ s/^push//) {
+			return ('PUSH', undef);
 		}
 
 		if ($$data =~ s/^($var_re)//) {

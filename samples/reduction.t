@@ -32,4 +32,15 @@ for (1 .. 6) {
 
 cmp_ok($pow, "==", 64); # 2^6
 
+
+my @list = ();
+
+#pomp_for reduction(push:@list) begin
+for ('a' .. 'z') {
+	push @list, $_;
+}
+#pomp_end
+
+is_deeply([sort @list], ['a' .. 'z']);
+
 done_testing();

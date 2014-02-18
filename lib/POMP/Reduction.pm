@@ -3,15 +3,26 @@ package POMP::Reduction;
 use strict;
 use warnings;
 
+sub new {
+	my $class = shift;
+	my ($init_value, $sub) = @_;
 
-sub init_for {
-	my ($op) = @_;
+	return bless {
+		init => $init_value,
+		sub  => $sub,
+	}
+}
 
-	if    ($op eq "+") { return 0; }
-	elsif ($op eq "-") { return 0; }
-	elsif ($op eq "*") { return 1; }
 
-	return undef;
+sub init {
+	my $self = shift;
+	return $self->{init};
+}
+
+
+sub apply {
+	my $self = shift;
+	return $self->{sub}->(@_);
 }
 
 1;

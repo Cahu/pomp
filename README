@@ -5,8 +5,21 @@ INSTALLATION
 
 To install this module type the following in this ditribution's root directory:
 
-   cpan -m . # install deps and make
-   cpan -t . # tests
+	$ cpan . # install deps, make, make test, make install
+
+To use this program whithout installing:
+
+	$ cpan -m .  # install deps and build
+	$ cpan -t .  # test
+
+	$ perl -Mblib compiler.pl     # run using locally built modules
+
+You can also do this manually:
+	
+	$ perl Makefile.PL
+	$ make
+	$ make test
+	$ make install # optional but you will have to use -Mblib
 
 
 DEPENDENCIES
@@ -22,5 +35,3 @@ LICENCE
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.18.2 or,
 at your option, any later version of Perl 5 you may have available.
-
-

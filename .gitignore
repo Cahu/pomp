@@ -1,6 +1,8 @@
 Parser.pm
 Makefile
 Makefile.old
+tags
+MYMETA.*
 
 blib/
 

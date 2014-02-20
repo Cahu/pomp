@@ -202,27 +202,31 @@ sub lex {
 	# sanity check
 	die "Sanity check failed" if ($began && !$is_parsing);
 
-	# remove leading spaces or line breaks when parsing a POMP command
-	$$data =~ s/^[\s#]*// if ($is_parsing);
-
 	# nothing else to read
 	return ('', undef) unless (length $$data);
 
 	## DIRECTIVES
-	if ($$data =~ s/^#pomp_for//) {
-		$is_parsing = 1;
-		return ('FOR', undef);
-	}
+	if (!$is_parsing) {
+		if ($$data =~ s/^#pomp_for//) {
+			$is_parsing = 1;
+			return ('FOR', undef);
+		}
 
-	if ($$data =~ s/^#pomp_parallel//) {
-		$is_parsing = 1;
-		return ('PARALLEL', undef);
+		if ($$data =~ s/^#pomp_parallel//) {
+			$is_parsing = 1;
+			return ('PARALLEL', undef);
+		}
 	}
+	
+	else {
+		# remove leading spaces when parsing a POMP command
+		$$data =~ s/^[ \t]*//;
 
-	## CODE
-	if ($$data =~ s/^begin// && $is_parsing) {
-		$began = 1;
-		return ('CODE_START', undef);
+		# detect end of pomp command
+		if ($$data =~ s/^\n(\s*[^#])/$1/) {
+			$began = 1;
+			return ('CODE_START', undef);
+		}
 	}
 
 	## Perl syntax subset

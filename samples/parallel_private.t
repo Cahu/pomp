@@ -8,7 +8,7 @@ my @machin = ('a' .. 'z');
 my %chose = ( toto => 'tutu' );
 
 
-#pomp_parallel private($truc, @machin, %chose) shared() begin
+#pomp_parallel private($truc, @machin, %chose) shared()
 {
 	$truc = 10;
 

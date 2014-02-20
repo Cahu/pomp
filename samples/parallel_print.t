@@ -4,7 +4,7 @@ use warnings;
 print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
 print "* test: all threads print the same thing\n";
 
-#pomp_parallel begin
+#pomp_parallel
 {
 	print "toto\n";
 }

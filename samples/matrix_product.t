@@ -25,7 +25,7 @@ my @answer = (
 	[19,  99, -89, -29]
 );
 
-#pomp_for shared(@A_square) firstprivate(@A) begin
+#pomp_for shared(@A_square) firstprivate(@A)
 for my $i (0 .. 3) {
 	for my $j (0 .. 3) {
 		for my $k (0 .. 3) {
@@ -45,7 +45,7 @@ is_deeply(\@A_square, \@answer);
 );
 
 for my $i (0 .. 3) {
-	#pomp_for shared(@A_square) firstprivate(@A, $i) begin
+	#pomp_for shared(@A_square) firstprivate(@A, $i)
 	for my $j (0 .. 3) {
 		for my $k (0 .. 3) {
 			$A_square[$i][$j] += $A[$i][$k] * $A[$k][$j];

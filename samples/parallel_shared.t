@@ -12,7 +12,7 @@ ok(! @machin);
 ok(! %chose );
 
 
-#pomp_parallel shared($truc, @machin, %chose) begin
+#pomp_parallel shared($truc, @machin, %chose)
 {
 	$truc = 10;
 

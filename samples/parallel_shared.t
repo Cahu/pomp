@@ -22,7 +22,6 @@ ok(! %chose );
 	%chose = (1 => "truc", 7 => "bidule");
 	$chose{3} = "mouton";
 }
-#pomp_end
 
 ok($truc == 10);
 

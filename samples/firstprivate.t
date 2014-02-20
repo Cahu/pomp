@@ -13,6 +13,5 @@ my %chouette = ( toto => 'tutu' );
 	is_deeply(\@machin, [1..4], "firstprivate list");
 	is_deeply(\%chouette, { toto => 'tutu' }, "firstprivate hash");
 }
-#pomp_end
 
 done_testing();

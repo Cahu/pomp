@@ -225,19 +225,6 @@ sub lex {
 		return ('CODE_START', undef);
 	}
 
-	if ($$data =~ s/
-			^{ (?:[ \t]* \n)?   # Remove spaces after '{'
-			                    # but keep indentation of the first line.
-			(.*?)               # Get all the code within the block
-			} \s*
-			\n \s* \#pomp_end   # '#pomp_end' on a new line, possibly indented
-		//sx && $began
-	) {
-		$began = 0;
-		$is_parsing = 0;
-		return ('CODE', POMP::Indent::reindent($1));
-	}
-
 	## Perl syntax subset
 	if ($began) {
 		# foreach(@list)
@@ -259,6 +246,14 @@ sub lex {
 			my $list_expr = substr(extract_codeblock($$data, "("), 1, -1);
 			return ('PERL_FOREACH', [$1, $list_expr]);
 		}
+
+		if ($$data =~ /^{/) {
+			$began = 0;
+			$is_parsing = 0;
+			my $code_block = substr(extract_codeblock($$data, "{"), 1, -1);
+			return ('CODE', POMP::Indent::reindent($code_block));
+		}
+
 	}
 
 	## CLAUSES

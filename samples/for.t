@@ -14,14 +14,12 @@ print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
 	for (@list) {
 		print "$_\n";
 	}
-	#pomp_end
 }
 
 ##pomp_for begin
 #{
 #	print "truc";
 #}
-##pomp_end
 
 {
 	my @machin = 'a' .. 'c';
@@ -32,7 +30,6 @@ print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
 	foreach my $truc (@machin) {
 		print "$truc\n";
 	}
-	#pomp_end
 }
 
 {
@@ -44,5 +41,4 @@ print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
 	for (@bar) {
 		print "$_\n";
 	}
-	#pomp_end
 }

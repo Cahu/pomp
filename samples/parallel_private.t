@@ -18,7 +18,6 @@ my %chose = ( toto => 'tutu' );
 	%chose = (1 => "truc", 7 => "bidule");
 	$chose{3} = "mouton";
 }
-#pomp_end
 
 ok($truc == 20, "scalar not modified");
 is_deeply(\@machin, ['a' .. 'z'], "list still the same");

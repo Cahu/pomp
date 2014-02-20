@@ -33,7 +33,6 @@ for my $i (0 .. 3) {
 		}
 	}
 }
-#pomp_end
 
 is_deeply(\@A_square, \@answer);
 
@@ -52,7 +51,6 @@ for my $i (0 .. 3) {
 			$A_square[$i][$j] += $A[$i][$k] * $A[$k][$j];
 		}
 	}
-	#pomp_end
 }
 
 is_deeply(\@A_square, \@answer);

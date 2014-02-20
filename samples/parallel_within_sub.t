@@ -13,5 +13,4 @@ sub within_sub {
 	for (1..10) {
 		print "$arg: $_\n";
 	}
-	#pomp_end
 }

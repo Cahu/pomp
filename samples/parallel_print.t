@@ -8,5 +8,4 @@ print "* test: all threads print the same thing\n";
 {
 	print "toto\n";
 }
-#pomp_end
 

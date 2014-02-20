@@ -9,7 +9,6 @@ my $var = 5;
 for (1 .. 100) {
 	$var += 1;
 }
-#pomp_end
 
 cmp_ok($var, "==", 105, "'+' operator reduction");
 
@@ -17,7 +16,6 @@ cmp_ok($var, "==", 105, "'+' operator reduction");
 for (1 .. 105) {
 	$var -= 1;
 }
-#pomp_end
 
 cmp_ok($var, "==", 0, "'-' operator reduction");
 
@@ -28,7 +26,6 @@ my $pow = 1;
 for (1 .. 6) {
 	$pow *= 2;
 }
-#pomp_end
 
 cmp_ok($pow, "==", 64, "'*' operator reduction"); # 2^6
 
@@ -39,7 +36,6 @@ my @list = ();
 for ('a' .. 'z') {
 	push @list, $_;
 }
-#pomp_end
 
 is_deeply([sort @list], ['a' .. 'z'], "push reduction");
 

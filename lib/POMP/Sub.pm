@@ -48,7 +48,10 @@ sub add_reduction {
 sub add_firstprivate {
 	my ($self, @firstprivate) = @_;
 	for (@firstprivate) {
-		unless (exists $self->{shared}->{$_} || exists $self->{reduction}->{$_}) {
+		unless (
+			   exists $self->{shared}->{$_}
+			|| exists $self->{reduction}->{$_}
+		) {
 			$self->{firstprivate}->{$_} = 1;
 			delete $self->{private}->{$_};
 		}

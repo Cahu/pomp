@@ -213,7 +213,7 @@ sub lex {
 		}
 
 
-		$$data =~ s/(.*?)#/#/s;
+		$$data =~ s/(.+?)#/#/s;
 
 		if ($1) {
 			# skip code until next '#'

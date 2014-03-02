@@ -182,10 +182,8 @@ operator:
 
 use Text::Balanced qw(extract_codeblock);
 
-my $line = 0;
 my $began = 0;
-my $is_parsing = 0;  # set to true when a POMP command has been read. set to
-                     # false when a corresponding #pomp_end has been read.
+my $is_parsing = 0;
 
 my $word_re   = qr/\w[\w\d]*/;
 my $var_re    = qr/[\$%@]$word_re/;
@@ -202,8 +200,8 @@ sub lex {
 	# nothing else to read
 	return ('', undef) unless (length $$data);
 
-	## DIRECTIVES
 	if (!$is_parsing) {
+		# No command being parsed, look for new directives
 		if ($$data =~ s/^#pomp_for//) {
 			$is_parsing = 1;
 			return ('FOR', undef);
@@ -213,9 +211,24 @@ sub lex {
 			$is_parsing = 1;
 			return ('PARALLEL', undef);
 		}
+
+
+		$$data =~ s/(.*?)#/#/s;
+
+		if ($1) {
+			# skip code until next '#'
+			return ('UNHANDLED_CODE', $1);
+		} else {
+			# no more '#', skip the rest of the file
+			my $ret = $$data;
+			$$data = "";
+			return ('UNHANDLED_CODE', $ret);
+		}
 	}
 	
 	else {
+		# We are in the middle of parsing a command.
+
 		# remove leading spaces when parsing a POMP command
 		$$data =~ s/^[ \t]*//;
 
@@ -224,102 +237,85 @@ sub lex {
 			$began = 1;
 			return ('CODE_START', undef);
 		}
-	}
 
-	## Perl syntax subset
-	if ($began) {
-		# foreach(@list)
-		#if ($$data =~ s/
-		#		^for(?:each)? \s+           # for or foreach
-		#		(?:my \s+ ($var_re))? \s*   # my $var
-		#		\(($list_re)\)              # (list)
-		#		//x
-		#) {
-		#	return ('PERL_FOREACH', [$1, $2]);
-		#}
 
-		# foreach(list expr)
-		if ($$data =~ s/
+		## Perl syntax subset
+		if ($began) {
+			# foreach(list expr)
+			if ($$data =~ s/
 				^for(?:each)? \s+           # for or foreach
 				(?:my \s+ ($var_re))? \s*   # my $var
 				\(/(/x
-		) {
-			my $list_expr = substr(extract_codeblock($$data, "("), 1, -1);
-			return ('PERL_FOREACH', [$1, $list_expr]);
+			) {
+				my $list_expr = substr(extract_codeblock($$data, "("), 1, -1);
+				return ('PERL_FOREACH', [$1, $list_expr]);
+			}
+
+			# code blocks
+			if ($$data =~ /^{/) {
+				$began = 0;
+				$is_parsing = 0;
+				my $code_block = substr(extract_codeblock($$data, "{"), 1, -1);
+				return ('CODE', POMP::Indent::reindent($code_block));
+			}
+
+			$$data =~ s/(.)//;
+			return $1;
 		}
 
-		if ($$data =~ /^{/) {
-			$began = 0;
-			$is_parsing = 0;
-			my $code_block = substr(extract_codeblock($$data, "{"), 1, -1);
-			return ('CODE', POMP::Indent::reindent($code_block));
+		## Clauses
+		else {
+			if ($$data =~ s/^if//) {
+				return ('IF', undef);
+			}
+
+			if ($$data =~ s/^shared//) {
+				return ('SHARED', undef);
+			}
+
+			if ($$data =~ s/^private//) {
+				return ('PRIVATE', undef);
+			}
+
+			if ($$data =~ s/^firstprivate//) {
+				return ('FIRSTPRIVATE', undef);
+			}
+
+			if ($$data =~ s/^reduction//) {
+				return ('REDUCTION', undef);
+			}
+
+			if ($$data =~ s/^,//) {
+				return ('COMMA', undef);
+			}
+
+			if ($$data =~ s/^://) {
+				return ('COLON', undef);
+			}
+
+			if ($$data =~ s/^\(//) {
+				return ('LPAREN', undef);
+			}
+
+			if ($$data =~ s/^\)//) {
+				return ('RPAREN', undef);
+			}
+
+			if ($$data =~ s/^($var_re)//) {
+				return ('VAR', $1);
+			}
+
+			if ($$data =~ s/^($word_re)//) {
+				return ('WORD', $1);
+			}
+
+			if ($$data =~ s/^([^\d\w:,]{1,2})//) {
+				return ('SYMBOLOP', $1);
+			}
+
+			$$data =~ s/(.)//;
+			return $1;
 		}
-	}
-
-	## CLAUSES
-	elsif ($is_parsing) {
-		if ($$data =~ s/^if//) {
-			return ('IF', undef);
-		}
-
-		if ($$data =~ s/^shared//) {
-			return ('SHARED', undef);
-		}
-
-		if ($$data =~ s/^private//) {
-			return ('PRIVATE', undef);
-		}
-
-		if ($$data =~ s/^firstprivate//) {
-			return ('FIRSTPRIVATE', undef);
-		}
-
-		if ($$data =~ s/^reduction//) {
-			return ('REDUCTION', undef);
-		}
-
-		if ($$data =~ s/^,//) {
-			return ('COMMA', undef);
-		}
-
-		if ($$data =~ s/^://) {
-			return ('COLON', undef);
-		}
-
-		if ($$data =~ s/^\(//) {
-			return ('LPAREN', undef);
-		}
-
-		if ($$data =~ s/^\)//) {
-			return ('RPAREN', undef);
-		}
-
-		if ($$data =~ s/^($var_re)//) {
-			return ('VAR', $1);
-		}
-
-		if ($$data =~ s/^($word_re)//) {
-			return ('WORD', $1);
-		}
-
-		if ($$data =~ s/^([^\d\w:,]{1,2})//) {
-			return ('SYMBOLOP', $1);
-		}
-
-	}
-
-	# end of recognized POMP langage
-	$_[0]->YYError if ($is_parsing);
-
-	$$data =~ s/(.*?[^#])#/#/s; # #pomp_* commands can be commented out too!
-	if ($1) {
-		# skip code until next '#'
-		return ('UNHANDLED_CODE', $1);
-	} else {
-		# no more '#', skip the rest of the file
-		my $ret = $$data;
-		$$data = "";
-		return ('UNHANDLED_CODE', $ret);
 	}
 }
 

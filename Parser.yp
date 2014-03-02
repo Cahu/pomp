@@ -255,7 +255,14 @@ sub lex {
 			if ($$data =~ /^{/) {
 				$began = 0;
 				$is_parsing = 0;
+
+				# extract code block
 				my $code_block = substr(extract_codeblock($$data, "{"), 1, -1);
+
+				# remove first line break if any
+				$code_block =~ s/^\s*?\n//s;
+
+				# re-indent and return the result
 				return ('CODE', POMP::Indent::reindent($code_block));
 			}
 

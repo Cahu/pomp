@@ -148,7 +148,11 @@ clause:
 		  return { 'FIRSTPRIVATE' => $_[3] };
 	  }
 	| REDUCTION LPAREN operator COLON varlist RPAREN {
-		  my $key = "REDUCTION" . $_[3];
+		  my $operator = $_[3];
+		  unless (exists $POMP_reductions{$operator}) {
+			  die "Reduction for operator '$operator' wasn't defined";
+		  }
+		  my $key = "REDUCTION" . $operator;
 		  return { $key => $_[5] };
 	  }
 	;
@@ -330,5 +334,5 @@ sub error {
 	my ($parser_ref, $error) = @_;
 	my $data = \$parser_ref->YYData->{DATA};
 	print "Error: $error\n" if ($error);
-	print "Error Around: '" . ($$data =~ s/(.*?)\n/$1/rs) . "'\n";
+	#print "Error Around: '" . ($$data =~ s/(.*?)\n/$1/rs) . "'\n";
 }

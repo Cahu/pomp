@@ -25,7 +25,9 @@ my @answer = (
 	[19,  99, -89, -29]
 );
 
-#pomp_for shared(@A_square) firstprivate(@A)
+#pomp_for
+# shared(@A_square)
+# firstprivate(@A)
 for my $i (0 .. 3) {
 	for my $j (0 .. 3) {
 		for my $k (0 .. 3) {

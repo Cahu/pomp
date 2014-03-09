@@ -233,6 +233,9 @@ sub lex {
 	else {
 		# We are in the middle of parsing a command.
 
+		# handle multiline directives
+		1 while ($$data =~ s/^\n[ \t]*#[ \t]*//);
+
 		# remove leading spaces when parsing a POMP command
 		$$data =~ s/^[ \t]*//;
 

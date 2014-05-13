@@ -6,6 +6,7 @@ WriteMakefile(
     NAME              => 'POMP',
     VERSION_FROM      => 'lib/POMP.pm', # finds $VERSION
     PREREQ_PM         => {
+		'Template'       => 0,
 	 	'Parse::Yapp'    => 0,
 		'Text::Balanced' => 0,
 	},

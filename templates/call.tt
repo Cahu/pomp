@@ -1,0 +1,35 @@
+[% arglist = BLOCK %]
+[% FOREACH firstprivate IN firstprivate_vars %]
+freeze(\[% firstprivate %]),
+[% END %]
+
+[% FOREACH shared IN shared_vars %]
+[% shared.clone_name %],
+[% END %]
+
+[% IF foreach %]
+([% foreach.list_expr %])
+[% END %]
+[% END %]
+
+[% FOREACH shared IN shared_vars %]
+my [% shared.clone_name %] = shared_clone(\[% shared.name %]);
+[% END +%]
+
+$_->enqueue([
+	POMP::CALL,
+	__PACKAGE__ . "::[% func_name %]",
+	[% arglist +%]
+]) for (@POMP::POMP_IN_QUEUES);
+
+
+[% func_name %]([% arglist %]);
+
+
+[% FOREACH shared IN shared_vars %]
+[% shared.name %] = [% shared.sigil %]{ [% shared.clone_name %] };
+[% END %]
+
+[% FOREACH reduc IN reductions %]
+[% reduc %]
+[% END %]

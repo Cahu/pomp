@@ -3,6 +3,8 @@ package POMP::Sub;
 use strict;
 use warnings;
 
+use Template;
+
 use POMP::Indent;
 use POMP::Reduction;
 
@@ -146,64 +148,49 @@ sub gen_body {
 sub gen_call {
 	my $self = shift;
 
-	my @clones;
-	my $call = "";
+	my @shared_vars;
 
 	# generate shared clones
 	for my $shared (keys %{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
-		my $clone_name = "\$" . $self->{name} . "_$name";
-		$call .= "my $clone_name = shared_clone(\\$shared);\n";
-		push @clones, $clone_name;
+
+		push @shared_vars, {
+			sigil      => $sigil,
+			name       => $shared,
+			clone_name => '$' . $self->{name} . "_$name",
+		};
 	}
 
-	# start the enqueue instruction
-	$call .= '$_->enqueue(['
-		. 'POMP::CALL, '
-		. '__PACKAGE__ . "::' . $self->{name} . '"'
-	;
-
-	my $args_str = "";
-
-	# generate arguments for firstprivate and cloned variables.
-	# pass frozen versions of these variables to perform a deep copy which will
-	# be used to reconstitute the data structure localy with thaw() by each
-	# thread.
-	$args_str .= join (", ",
-		(map { "freeze(\\$_)" } keys %{$self->{firstprivate}}),
-		@clones,
-	);
-
-	# last argument is the index list to be given to foreach.
-	# force list context by adding parenthesis.
-	if ($self->{foreach}) {
-		$args_str .= ", " if (length $args_str > 0);
-		$args_str .= "($self->{foreach}->{list_expr})";
-	}
-
-	# terminate the enqueue instruction
-	$call .= ", $args_str" if ($args_str);
-	$call .= ']) for (@POMP::POMP_IN_QUEUES);' . "\n";
-
-	# make the main thread call the same function with the same arguments
-	$call .= $self->{name} . "($args_str);\n";
-
-	# copy back values from shared clones into original vars
-	for my $shared (keys %{$self->{shared}}) {
-		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
-		my $clone_name = "\$" . $self->{name} . "_$name";
-		$call .= "$shared = $sigil\{$clone_name\};";
-	}
+	my @firstprivate_vars = keys %{ $self->{firstprivate} };
 
 	# handle reductions
+	my @reductions;
 	while (my ($var_name, $reduction) = each %{$self->{reduction}}) {
-		$call .= $reduction->apply(
-			$var_name,
-			'map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES'
-		);
+		push @reductions,
+			$reduction->apply(
+				$var_name,
+				'map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES'
+			);
 	}
 
-	return $call;
+	my $tt = Template->new({
+		PRE_CHOMP  => 1,
+		POST_CHOMP => 1,
+	}) or die "$Template::ERROR\n";
+
+	my $vars = {
+		func_name         => $self->{name},
+		shared_vars       => \@shared_vars,
+		firstprivate_vars => \@firstprivate_vars,
+		reductions        => \@reductions,
+		foreach           => $self->{foreach},
+	};
+
+	my $output = '';
+	$tt->process('templates/call.tt', $vars, \$output)
+		or die $tt->error . "\n";
+
+	return $output;
 }
 
 sub _gen_if {

@@ -30,6 +30,6 @@ $_->enqueue([
 [% shared.name %] = [% shared.sigil %]{ [% shared.clone_name %] };
 [% END %]
 
-[% FOREACH reduc IN reductions %]
-[% reduc %]
+[% FOREACH reduction IN reductions %]
+[% reduction.reduction.apply(reduction.var_name, 'map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES') %]
 [% END %]

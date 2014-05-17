@@ -148,9 +148,8 @@ sub gen_body {
 sub gen_call {
 	my $self = shift;
 
-	my @shared_vars;
-
 	# generate shared clones
+	my @shared_vars;
 	for my $shared (keys %{$self->{shared}}) {
 		my ($sigil, $name) = ($shared =~ /^([\$@%])(.*)/);
 
@@ -161,17 +160,16 @@ sub gen_call {
 		};
 	}
 
-	my @firstprivate_vars = keys %{ $self->{firstprivate} };
-
-	# handle reductions
+	# generate reductions
 	my @reductions;
-	while (my ($var_name, $reduction) = each %{$self->{reduction}}) {
-		push @reductions,
-			$reduction->apply(
-				$var_name,
-				'map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES'
-			);
+	while (my ($var_name, $reduction) = each %{ $self->{reduction} }) {
+		push @reductions, {
+			var_name  => $var_name,
+			reduction => $reduction,
+		};
 	}
+
+	my @firstprivate_vars = keys %{ $self->{firstprivate} };
 
 	my $tt = Template->new({
 		PRE_CHOMP  => 1,

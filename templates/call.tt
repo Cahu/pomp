@@ -2,11 +2,9 @@
 [% FOREACH firstprivate IN firstprivate_vars %]
 freeze(\[% firstprivate %]),
 [% END %]
-
 [% FOREACH shared IN shared_vars %]
 [% shared.clone_name %],
 [% END %]
-
 [% IF foreach %]
 ([% foreach.list_expr %])
 [% END %]
@@ -14,12 +12,14 @@ freeze(\[% firstprivate %]),
 
 [% FOREACH shared IN shared_vars %]
 my [% shared.clone_name %] = shared_clone(\[% shared.name %]);
-[% END +%]
+
+[% END %]
 
 $_->enqueue([
 	POMP::CALL,
 	__PACKAGE__ . "::[% func_name %]",
-	[% arglist +%]
+	[% arglist %]
+
 ]) for (@POMP::POMP_IN_QUEUES);
 
 
@@ -28,8 +28,10 @@ $_->enqueue([
 
 [% FOREACH shared IN shared_vars %]
 [% shared.name %] = [% shared.sigil %]{ [% shared.clone_name %] };
+
 [% END %]
 
 [% FOREACH reduction IN reductions %]
 [% reduction.reduction.apply(reduction.var_name, 'map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES') %]
+
 [% END %]

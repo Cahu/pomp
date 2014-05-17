@@ -1,0 +1,48 @@
+sub [% func_name %] {
+
+	[% FOREACH private IN private_vars %]
+	my [% private %];
+
+	[% END %]
+
+	[% FOREACH reduc IN reductions %]
+	my [% reduc.var_name %] = [% reduc.reduction.init %];
+
+	[% END %]
+
+	[% FOREACH firstprivate IN firstprivate_vars %]
+	my [% firstprivate.substitute %] = thaw(shift);
+
+	[% END %]
+
+	[% FOREACH shared IN shared_vars %]
+	my [% shared.substitute %] = shift;
+
+	[% END %]
+
+
+	[% IF foreach %]
+	[% IF foreach.var_name %]
+	for my [% foreach.var_name %] (POMP::GET_SHARE(@_)) {
+
+		[% body %]
+	}
+	[% ELSE %]
+	for (POMP::GET_SHARE(@_)) {
+
+		[% body %]
+	}
+	[% END %]
+	[% ELSE %]
+
+	[% body %]
+	[% END %]
+
+
+
+	[% FOREACH reduc IN reductions %]
+	POMP::ENQUEUE(freeze(\[% reduc.var_name %]));
+	[% END %]
+
+	POMP::BARRIER();
+}

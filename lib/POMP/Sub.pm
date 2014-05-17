@@ -88,60 +88,56 @@ sub add_foreach {
 sub gen_body {
 	my $self = shift;
 
-	my $private_vars = "";
-	$private_vars .= "my $_;\n" foreach (keys %{$self->{private}});
+	my @private_vars = keys %{$self->{private}};
 
-	my $shared_vars = "";
+	my @reductions;
+	while (my ($var_name, $reduction) = each %{$self->{reduction}}) {
+		push @reductions, {
+			var_name  => $var_name,
+			reduction => $reduction,
+		};
+	}
+
+	my @shared_vars;
 	foreach my $shared (keys %{$self->{shared}}) {
 		# Shared variables are passed by reference (result of shared_clone from
 		# threads::shared). We must substitute all occurences of these variables
 		# with the corresponding dereference instruction.
-		my $substitute = _substitute_with_refs($shared, \($self->{code}));
-		$shared_vars .= "my \$$substitute = shift;\n";
+		push @shared_vars, {
+			name       => $shared,
+			substitute => _substitute_with_refs($shared, \($self->{code})),
+		};
 	}
 
-	my $reduction_vars = "";
-	while (my ($var_name, $reduction) = each %{$self->{reduction}}) {
-		my $initial_value = $reduction->init;
-		# create local version of the reduced vars and init with initial value
-		$reduction_vars .= "my $var_name = $initial_value;\n";
-	}
-
-	my $firstprivate_vars = "";
+	my @firstprivate_vars;
 	foreach my $firstprivate (keys %{$self->{firstprivate}}) {
 		# Make a local copy with Storable::thaw
-		my $substitute = _substitute_with_refs($firstprivate, \($self->{code}));
-		$firstprivate_vars .= "my \$$substitute = thaw(shift);\n";
+		push @firstprivate_vars, {
+			name       => $firstprivate,
+			substitute => _substitute_with_refs($firstprivate, \($self->{code})),
+		};
 	}
 
-	my $body = "";
+	my $tt = Template->new({
+		PRE_CHOMP  => 1,
+		POST_CHOMP => 1,
+	}) or die "$Template::ERROR\n";
 
-	# private and shared local variables
-	$body .= $private_vars . $reduction_vars . $firstprivate_vars . $shared_vars;
+	my $vars = {
+		func_name         => $self->{name},
+		shared_vars       => \@shared_vars,
+		private_vars      => \@private_vars,
+		firstprivate_vars => \@firstprivate_vars,
+		reductions        => \@reductions,
+		foreach           => $self->{foreach},
+		body              => $self->{code},
+	};
 
-	# foreach loops
-	if ($self->{foreach}) {
-		my $var_name = $self->{foreach}->{var_name};
+	my $output = '';
+	$tt->process('templates/function.tt', $vars, \$output)
+		or die $tt->error . "\n";
 
-		# remaining arguments are to be given to the foreach
-		$body .= _gen_for(
-			$var_name,
-			'POMP::GET_SHARE(@_)',
-			$self->{code}
-		);
-	}
-
-	else {
-		$body .= $self->{code};
-	}
-
-	$body .= "POMP::ENQUEUE(freeze(\\$_));\n" for (keys %{$self->{reduction}});
-
-	$body .= "POMP::BARRIER();\n"; # synchronize threads
-
-	return "sub " . $self->{name} . " {\n"
-		. POMP::Indent::indent($body)
-		. "}\n";
+	return $output;
 }
 
 
@@ -232,20 +228,20 @@ sub _substitute_with_refs {
 	my $substitute;
 
 	if ($sigil eq '@') {
-		$substitute = "pomp_array_" . $barename;
-		$$code_ref =~ s/\@$barename/\@\{\$$substitute\}/g;
-		$$code_ref =~ s/\$$barename\s*\[/\$$substitute->\[/g;
+		$substitute = "\$pomp_array_" . $barename;
+		$$code_ref =~ s/\@$barename/\@\{$substitute\}/g;
+		$$code_ref =~ s/\$$barename\s*\[/$substitute->\[/g;
 	}
 
 	elsif ($sigil eq '%') {
-		$substitute = "pomp_hash_" . $barename;
-		$$code_ref =~ s/\%$barename/\%\{\$$substitute\}/g;
-		$$code_ref =~ s/\$$barename\s*\{/\$$substitute->\{/g;
+		$substitute = "\$pomp_hash_" . $barename;
+		$$code_ref =~ s/\%$barename/\%\{$substitute\}/g;
+		$$code_ref =~ s/\$$barename\s*\{/$substitute->\{/g;
 	}
 
 	elsif ($sigil eq '$') {
-		$substitute = "pomp_scalar_" . $barename;
-		$$code_ref =~ s/\$$barename/\$\$$substitute/g;
+		$substitute = "\$pomp_scalar_" . $barename;
+		$$code_ref =~ s/\$$barename/\$$substitute/g;
 	}
 
 	return $substitute;

@@ -18,7 +18,8 @@ my [% shared.clone_name %] = shared_clone(\[% shared.name %]);
 $_->enqueue([
 	POMP::CALL,
 	__PACKAGE__ . "::[% func_name %]",
-	[% arglist %]
+
+	[% arglist FILTER indent("\t") %]
 
 ]) for (@POMP::POMP_IN_QUEUES);
 

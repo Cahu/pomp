@@ -25,17 +25,17 @@ sub [% func_name %] {
 	[% IF foreach.var_name %]
 	for my [% foreach.var_name %] (POMP::GET_SHARE(@_)) {
 
-		[% body %]
+		[% body FILTER indent("\t") %]
 	}
 	[% ELSE %]
 	for (POMP::GET_SHARE(@_)) {
 
-		[% body %]
+		[% body FILTER indent("\t") %]
 	}
 	[% END %]
 	[% ELSE %]
 
-	[% body %]
+	[% body FILTER indent("\t") %]
 	[% END %]
 
 

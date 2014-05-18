@@ -216,20 +216,27 @@ sub lex {
 			return ('PARALLEL', undef);
 		}
 
-
-		$$data =~ s/(.+?)#/#/s;
-
-		if ($1) {
-			# skip code until next '#'
-			return ('UNHANDLED_CODE', $1);
-		} else {
-			# no more '#', skip the rest of the file
-			my $ret = $$data;
-			$$data = "";
-			return ('UNHANDLED_CODE', $ret);
+		if ($$data =~ s/^#pomp_declare//) {
+			$is_parsing = 1;
+			return ('DECLARE', undef);
 		}
+
+		if ($$data =~ s/^(#.*)//) {
+			# looks like a regular comment, skip til EOL
+			return ('UNHANDLED_CODE', $1);
+		}
+
+		if ($$data =~ s/(.+)#/#/s) {
+			# looks like code we don't need to handle: skip till next '#'
+			return ('UNHANDLED_CODE', $1);
+		}
+
+		# no more '#', skip the rest of the file
+		my $ret = $$data;
+		$$data = "";
+		return ('UNHANDLED_CODE', $ret);
 	}
-	
+
 	else {
 		# We are in the middle of parsing a command.
 

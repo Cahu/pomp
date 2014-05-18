@@ -6,9 +6,9 @@ $" = ", ";
 print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
 
 {
-	my @list = 1..2;
+	my @list = 1..99;
 
-	print "* test: print the (@list) list in parallel\n";
+	print "* test: print the (1 .. 99) list in parallel\n";
 
 	#pomp_for
 	for (@list) {
@@ -18,7 +18,7 @@ print "Number of threads used: $POMP::POMP_NUM_THREADS\n";
 
 ##pomp_for
 #{
-#	print "truc";
+#	ok(0); # make sure this isn't executed
 #}
 
 {

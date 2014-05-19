@@ -7,13 +7,6 @@ To install this module type the following in this ditribution's root directory:
 
 	$ cpan . # install deps, make, make test, make install
 
-To use this program whithout installing:
-
-	$ cpan -m .  # install deps and build
-	$ cpan -t .  # test
-
-	$ perl -Mblib compiler.pl     # run using locally built modules
-
 You can also do this manually:
 	
 	$ perl Makefile.PL
@@ -26,8 +19,9 @@ DEPENDENCIES
 
 This program requires these other modules and libraries:
 
-Parse::Yapp
-Text::Balanced
+	Parse::Yapp
+	Text::Balanced
+	Template::Toolkit
 
 
 LICENCE

@@ -226,7 +226,7 @@ sub lex {
 			return ('UNHANDLED_CODE', $1);
 		}
 
-		if ($$data =~ s/(.+)#/#/s) {
+		if ($$data =~ s/(.+?)#/#/s) {
 			# looks like code we don't need to handle: skip till next '#'
 			return ('UNHANDLED_CODE', $1);
 		}

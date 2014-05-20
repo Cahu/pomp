@@ -153,3 +153,23 @@ $variable{$key}   --->   $clone->{$key}
 %variable         --->   %{ $clone }
 ```
 
+## Declaring reductions
+
+```perl
+$POMP_reductions{'+'} = POMP::Reduction->new(
+	0, sub {
+		my ($accumulator, $refs_list) = @_;
+		return "$accumulator += \$\$_ for ($refs_list);";
+	}
+);
+```
+
+```perl
+$POMP_reductions{'push'} = POMP::Reduction->new(
+	'()', sub {
+		my ($accumulator, $refs_list) = @_;
+		return "push $accumulator, map { \@\$_ } $refs_list;";
+	}
+);
+```
+

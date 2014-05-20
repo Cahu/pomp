@@ -2,7 +2,7 @@
 %
 %
 
-# What this module actualy does
+# What this actualy does
 
 This software does two things. First, it installs a module that spawns threads and
 provides some utility functions for parallel tasks managements. Second it
@@ -12,7 +12,7 @@ and transform the code to make the annotated code run in parallel.
 
 # Threads
 
-A modified script produced by the compiler has an `use POMP.pm` statement. This
+A modified script produced by the compiler has an `use POMP` statement. This
 module spawns a collection of worker threads which execute an infinite loop that
 pulls tasks from a queue. All threads have their own input queue (where they
 pull tasks from) and their own output queue (where they write results).
@@ -35,7 +35,8 @@ synchronization statement (with a barrier) before exiting.
 
 ## Calling
 
-### Opcode
+There are multiple things that need to be handled before **and** after calling a
+generated sub.
 
 The opcode to be enqueued is `CALL`. Arguments are the name of the subroutine to
 call followed by the parameters to pass to it.
@@ -47,10 +48,11 @@ The generated sub name is passed with something that looks like
 
 ### Private variables
 
-Nothing is done at the call stage for private vars.
+Nothing is done at the calling stage for private vars.
 
 ### Firstprivate variables
 
+Firstprivate vars are serialized and passed as argument.
 
 ### Reductions
 
@@ -59,15 +61,15 @@ user which should take a string as a parameter. This string is a piece of code
 that will generate the list of arguments when the program is actually run. It
 looks like this:
 
-`map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES`
+```map { thaw($_->dequeue) } @POMP::POMP_OUT_QUEUES```
 
-This will pull (frozen) return values produced by threads. User's code can do
-whatever he wants with them in the code he supplied.
+This will pull (frozen) return values produced by threads. Users' code can do
+whatever they wants with them in the code they supplied.
 
 ### Shared variables
 
 Before the call, cloned versions of shared variables are created (with
-`shared_clone()`). These are passed as argument to the worker thread which in
+```shared_clone()```). These are passed as argument to the worker thread which in
 turn will pass them to the parallel sub.
 
 After the call, the value contained in the clone is copied back into the
@@ -77,10 +79,42 @@ original variable.
 
 ### Arguments order
 
-The order is : firstprivate variables, shared variables, for loop interation
+The order of the arguments : firstprivate variables, shared variables, for loop interation
 list.
 
-## Variables
+
+### Example of a call
+
+```perl
+#pomp_for shared(@A_square) firstprivate(@A)
+for my $i (0 .. 3) {
+	for my $j (0 .. 3) {
+		for my $k (0 .. 3) {
+			$A_square[$i][$j] += $A[$i][$k] * $A[$k][$j];
+		}
+	}
+}
+```
+
+The code above will be transformed into:
+
+```perl
+my $pomp_for1_A_square = shared_clone(\@A_square);
+
+$_->enqueue([
+	POMP::CALL,
+	__PACKAGE__ . "::pomp_for1",
+	freeze(\@A),$pomp_for1_A_square,(0 .. 3)
+]) for (@POMP::POMP_IN_QUEUES);
+
+pomp_for1(freeze(\@A),$pomp_for1_A_square,(0 .. 3));
+
+@A_square = @{ $pomp_for1_A_square };
+```
+
+
+
+## Sub body
 
 ### Private variables
 
@@ -90,11 +124,15 @@ statement in the corresponding sub.
 
 ### Firstprivate variables
 
-Firstprivate variables are handled by declaring a local version withing the
+Firstprivate variables are handled by declaring a local version within the
 generated sub and by initializing it with a `thaw(shift)`. For this to work, a
 frozen version of the variable is passed as an argument to the generated sub.
 
 ### Reductions
+
+Accumulator variables used in reductions are lexical variables initialized with
+the init value from the reduction's definition. Their value at the end of the
+sub is pushed in a thread's `POMP_OUT_QUEUE`.
 
 ### Shared variables
 
@@ -114,4 +152,3 @@ $variable{$key}   --->   $clone->{$key}
 %variable         --->   %{ $clone }
 ```
 
-## For loops

@@ -120,7 +120,7 @@ pomp_for1($pomp_for1_A,$pomp_for1_A_square,(0 .. 3));
 ### Private variables
 
 Variables declared private are handled by declaring a local version within the
-generated sub. This is simply done by inserting a `my $private_var;`
+generated sub. This is simply done by inserting a ```my $private_var;```
 statement in the corresponding sub.
 
 ### Firstprivate variables
@@ -133,7 +133,7 @@ frozen version of the variable is passed as an argument to the generated sub.
 
 Accumulator variables used in reductions are lexical variables initialized with
 the init value from the reduction's definition. Their value at the end of the
-sub is pushed in a thread's `POMP_OUT_QUEUE`.
+sub is pushed in a thread's ```POMP_OUT_QUEUE```.
 
 ### Shared variables
 

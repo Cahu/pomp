@@ -91,9 +91,15 @@ sub BARRIER {
 
 
 INIT {
-	# Create queues and spawn threads
+	# IN_QUEUES to pass opcodes and params
+	# main thread doesn't need an IN_QUEUE
 	@POMP_IN_QUEUES  = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS-1);
+
+	# OUT_QUEUES to return values
+	# main thread needs an OUT_QUEUE for reductions
 	@POMP_OUT_QUEUES = map { Thread::Queue->new(); } (1..$POMP_NUM_THREADS  );
+
+	# Spawn threads and give them queues
 	@POMP_THREADS = map {
 		threads->create(
 			\&POMP_CONSUMER,

@@ -165,7 +165,15 @@ sub gen_call {
 		};
 	}
 
-	my @firstprivate_vars = keys %{ $self->{firstprivate} };
+	my @firstprivate_vars;
+	for my $firstprivate (keys %{ $self->{firstprivate} }) {
+		my ($sigil, $name) = ($firstprivate =~ /^([\$@%])(.*)/);
+
+		push @firstprivate_vars, {
+			name        => $firstprivate,
+			serial_name => '$' . $self->{name} . "_$name",
+		};
+	}
 
 	my $tt = Template->new({
 		PRE_CHOMP  => 1,

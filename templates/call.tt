@@ -1,6 +1,6 @@
 [% arglist = BLOCK %]
 [% FOREACH firstprivate IN firstprivate_vars %]
-freeze(\[% firstprivate %]),
+[% firstprivate.serial_name %],
 [% END %]
 [% FOREACH shared IN shared_vars %]
 [% shared.clone_name %],
@@ -12,6 +12,11 @@ freeze(\[% firstprivate %]),
 
 [% FOREACH shared IN shared_vars %]
 my [% shared.clone_name %] = shared_clone(\[% shared.name %]);
+
+[% END %]
+
+[% FOREACH firstprivate IN firstprivate_vars %]
+my [% firstprivate.serial_name %] = freeze(\[% firstprivate.name %]);
 
 [% END %]
 

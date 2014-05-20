@@ -100,14 +100,15 @@ The code above will be transformed into:
 
 ```perl
 my $pomp_for1_A_square = shared_clone(\@A_square);
+my $pomp_for1_A = freeze(\@A);
 
 $_->enqueue([
 	POMP::CALL,
 	__PACKAGE__ . "::pomp_for1",
-	freeze(\@A),$pomp_for1_A_square,(0 .. 3)
+	$pomp_for1_A,$pomp_for1_A_square,(0 .. 3)
 ]) for (@POMP::POMP_IN_QUEUES);
 
-pomp_for1(freeze(\@A),$pomp_for1_A_square,(0 .. 3));
+pomp_for1($pomp_for1_A,$pomp_for1_A_square,(0 .. 3));
 
 @A_square = @{ $pomp_for1_A_square };
 ```

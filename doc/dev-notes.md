@@ -30,8 +30,8 @@ arguments. Example of opcodes are:
 All parallelized code is handled by creating a sub which can be passed **by
 name** to worker threads.
 
-The generated subs (which contain the code to be run in parallel) contain a
-synchronization statement (with a barrier) before exiting.
+The generated subs (which contain the code to be run in parallel) synchronize on
+a barrier before exiting.
 
 ## Calling
 
@@ -113,14 +113,12 @@ pomp_for1($pomp_for1_A,$pomp_for1_A_square,(0 .. 3));
 @A_square = @{ $pomp_for1_A_square };
 ```
 
-
-
 ## Sub body
 
 ### Private variables
 
 Variables declared private are handled by declaring a local version within the
-generated sub. This is simply done by inserting a ```my $private_var;```
+generated sub. This is simply done by inserting a ```my $private_var```
 statement in the corresponding sub.
 
 ### Firstprivate variables
